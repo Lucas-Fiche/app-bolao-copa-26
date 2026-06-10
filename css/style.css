@@ -173,7 +173,8 @@ select:focus, input:focus {
 .conteudo {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 16px 110px; /* espaço para o rodapé fixo */
+  /* Espaço extra no fim da lista para o rodapé fixo não cobrir o último card */
+  padding: 4px 16px calc(120px + env(safe-area-inset-bottom, 0px));
 }
 
 .painel { margin-bottom: 18px; }
@@ -489,7 +490,10 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  padding: 14px 20px;
+  /* No PWA (standalone) o app vai até a borda da tela: garante respiro
+     mínimo e soma a área segura do iPhone (barra de gestos). */
+  padding-bottom: max(18px, calc(12px + env(safe-area-inset-bottom, 0px)));
   background: linear-gradient(180deg, rgba(242, 246, 250, 0), var(--fundo) 40%);
 }
 .rodape .btn-primario { margin-top: 0; max-width: 480px; display: block; margin-inline: auto; }
