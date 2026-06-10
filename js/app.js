@@ -373,6 +373,9 @@ function criarCardJogo(jogo, comGrupo) {
   const card = document.createElement('div');
   card.className = 'jogo';
   card.dataset.idJogo = jogo.id;
+  if ([jogo.timeA, jogo.timeB].some(t => String(t).trim() === 'Brasil')) {
+    card.classList.add('brasil');
+  }
 
   const palpite = estado.palpites[jogo.id] || {};
   const encerrado = jogo.golsAReal !== null && jogo.golsBReal !== null;

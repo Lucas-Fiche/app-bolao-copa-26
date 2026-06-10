@@ -245,6 +245,14 @@ input.gols::-webkit-outer-spin-button,
 input.gols::-webkit-inner-spin-button { -webkit-appearance: none; }
 input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 
+/* Jogo do Brasil: borda em degradê verde e amarelo 🇧🇷 */
+.jogo.brasil {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(120deg, #009739, #ffd700, #009739) border-box;
+  box-shadow: 0 2px 14px rgba(0, 151, 57, 0.18);
+}
+
 /* Jogo bloqueado: desabilitado e acinzentado */
 .jogo.bloqueado { opacity: 0.55; filter: grayscale(0.9); background: #f3f5f8; }
 .jogo.bloqueado input.gols { cursor: not-allowed; }
