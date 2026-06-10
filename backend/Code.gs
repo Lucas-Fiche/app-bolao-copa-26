@@ -42,6 +42,42 @@ const PONTOS_ARTILHEIRO = 10;
 const CAMPEAO_REAL = '';
 const ARTILHEIRO_REAL = '';
 
+// ===== The Odds API (the-odds-api.com) — odds e placares automáticos =====
+// 1. Crie uma conta gratuita e cole a chave abaixo.
+// 2. Rode listarEsportes() e confira no log o sport key da Copa
+//    (esperado: 'soccer_fifa_world_cup').
+// 3. Adicione as colunas H, I e J na aba Jogos: Odd_A | Odd_Empate | Odd_B.
+// 4. Crie acionadores por tempo (Acionadores > Adicionar):
+//    - atualizarPlacares: a cada 4 horas  (2 créditos/chamada)
+//    - atualizarOdds:     1x por dia      (1 crédito/chamada)
+//    Plano gratuito = 500 créditos/mês; essa cadência usa ~390.
+const ODDS_API_KEY = 'COLE_SUA_CHAVE_AQUI';
+const ODDS_API_SPORT = 'soccer_fifa_world_cup';
+
+// A API usa nomes em inglês; a planilha, em português.
+const NOMES_API = {
+  'Germany': 'Alemanha', 'Argentina': 'Argentina', 'Algeria': 'Argélia',
+  'Saudi Arabia': 'Arábia Saudita', 'Australia': 'Austrália', 'Brazil': 'Brasil',
+  'Belgium': 'Bélgica', 'Bosnia and Herzegovina': 'Bósnia e Herz.',
+  'Cape Verde': 'Cabo Verde', 'Canada': 'Canadá', 'Qatar': 'Catar',
+  'Colombia': 'Colômbia', 'South Korea': 'Coreia do Sul',
+  'Ivory Coast': 'Costa do Marfim', "Cote d'Ivoire": 'Costa do Marfim',
+  'Croatia': 'Croácia', 'Curacao': 'Curaçao', 'Curaçao': 'Curaçao',
+  'Egypt': 'Egito', 'Ecuador': 'Equador', 'Scotland': 'Escócia',
+  'Spain': 'Espanha', 'United States': 'Estados Unidos', 'USA': 'Estados Unidos',
+  'France': 'França', 'Ghana': 'Gana', 'Haiti': 'Haiti',
+  'Netherlands': 'Holanda', 'England': 'Inglaterra', 'Iraq': 'Iraque',
+  'Iran': 'Irã', 'Japan': 'Japão', 'Jordan': 'Jordânia', 'Morocco': 'Marrocos',
+  'Mexico': 'México', 'Norway': 'Noruega', 'New Zealand': 'Nova Zelândia',
+  'Panama': 'Panamá', 'Paraguay': 'Paraguai', 'Portugal': 'Portugal',
+  'DR Congo': 'RD Congo', 'Congo DR': 'RD Congo',
+  'Democratic Republic of the Congo': 'RD Congo', 'Czech Republic': 'Rep. Tcheca',
+  'Czechia': 'Rep. Tcheca', 'Senegal': 'Senegal', 'Sweden': 'Suécia',
+  'Switzerland': 'Suíça', 'Tunisia': 'Tunísia', 'Turkey': 'Turquia',
+  'Türkiye': 'Turquia', 'Uruguay': 'Uruguai', 'Uzbekistan': 'Uzbequistão',
+  'South Africa': 'África do Sul', 'Austria': 'Áustria'
+};
+
 // ===================== PONTOS DE ENTRADA (API) =====================
 
 /**
@@ -103,6 +139,9 @@ function montarInit() {
         timeB: j.timeB,
         golsAReal: j.golsA === '' ? null : Number(j.golsA),
         golsBReal: j.golsB === '' ? null : Number(j.golsB),
+        odds: (Number(j.oddA) > 0 && Number(j.oddX) > 0 && Number(j.oddB) > 0)
+          ? { a: Number(j.oddA), x: Number(j.oddX), b: Number(j.oddB) }
+          : null,
         bloqueado: jogoBloqueado(j.dataHora, agora),
         palpites: palpitesPorJogo[j.id] || null
       };
@@ -348,6 +387,141 @@ function pontosDoPalpite(palpiteA, palpiteB, realA, realB) {
   return 0;
 }
 
+// ============== THE ODDS API: ODDS E PLACARES AUTOMÁTICOS ==============
+
+/**
+ * Busca as odds 1x2 (casa/empate/fora) e grava nas colunas H/I/J da aba
+ * Jogos (Odd_A | Odd_Empate | Odd_B), tirando a média entre as casas de
+ * aposta. Rode manualmente ou crie um acionador diário.
+ */
+function atualizarOdds() {
+  const eventos = chamarOddsApi('odds', '&regions=eu&markets=h2h&oddsFormat=decimal');
+  const aba = getAba(ABA_JOGOS);
+  const linhaDe = indexarJogosPorTimes(aba);
+  var gravados = 0;
+
+  eventos.forEach(function (ev) {
+    const casa = traduzirTime(ev.home_team);
+    const fora = traduzirTime(ev.away_team);
+
+    // Média das odds entre os bookmakers (mais estável que pegar um só).
+    var soma = { casa: 0, empate: 0, fora: 0 }, n = 0;
+    (ev.bookmakers || []).forEach(function (bk) {
+      const h2h = (bk.markets || []).filter(function (m) { return m.key === 'h2h'; })[0];
+      if (!h2h) return;
+      var oCasa, oEmpate, oFora;
+      h2h.outcomes.forEach(function (o) {
+        if (o.name === ev.home_team) oCasa = o.price;
+        else if (o.name === ev.away_team) oFora = o.price;
+        else oEmpate = o.price; // 'Draw'
+      });
+      if (oCasa && oEmpate && oFora) {
+        soma.casa += oCasa; soma.empate += oEmpate; soma.fora += oFora; n++;
+      }
+    });
+    if (!n) return;
+
+    const odd = function (x) { return Math.round((x / n) * 100) / 100; };
+    var alvo = linhaDe[chaveTimes(casa, fora)];
+    if (alvo) {
+      aba.getRange(alvo, 8, 1, 3).setValues([[odd(soma.casa), odd(soma.empate), odd(soma.fora)]]);
+      gravados++;
+      return;
+    }
+    alvo = linhaDe[chaveTimes(fora, casa)]; // planilha com mando invertido
+    if (alvo) {
+      aba.getRange(alvo, 8, 1, 3).setValues([[odd(soma.fora), odd(soma.empate), odd(soma.casa)]]);
+      gravados++;
+    }
+  });
+  Logger.log('atualizarOdds: odds gravadas em ' + gravados + ' jogo(s).');
+}
+
+/**
+ * Busca os jogos encerrados nas últimas 48h e preenche Gols_A_Real e
+ * Gols_B_Real automaticamente. Só escreve em células vazias — uma
+ * correção manual sua nunca é sobrescrita. Acionador sugerido: a cada 4h.
+ */
+function atualizarPlacares() {
+  const eventos = chamarOddsApi('scores', '&daysFrom=2');
+  const aba = getAba(ABA_JOGOS);
+  const valores = aba.getDataRange().getValues();
+  const linhaDe = indexarJogosPorTimes(aba);
+  var gravados = 0;
+
+  eventos.forEach(function (ev) {
+    if (!ev.completed || !ev.scores) return;
+    const casa = traduzirTime(ev.home_team);
+    const fora = traduzirTime(ev.away_team);
+    var golsCasa = null, golsFora = null;
+    ev.scores.forEach(function (s) {
+      if (s.name === ev.home_team) golsCasa = Number(s.score);
+      else if (s.name === ev.away_team) golsFora = Number(s.score);
+    });
+    if (golsCasa === null || golsFora === null || isNaN(golsCasa) || isNaN(golsFora)) return;
+
+    var linha = linhaDe[chaveTimes(casa, fora)], golsA = golsCasa, golsB = golsFora;
+    if (!linha) {
+      linha = linhaDe[chaveTimes(fora, casa)];
+      golsA = golsFora; golsB = golsCasa;
+    }
+    if (!linha) return;
+    // Não sobrescreve resultado já lançado (manual ou de execução anterior).
+    if (valores[linha - 1][5] !== '' && valores[linha - 1][6] !== '') return;
+    aba.getRange(linha, 6, 1, 2).setValues([[golsA, golsB]]);
+    gravados++;
+  });
+  Logger.log('atualizarPlacares: ' + gravados + ' resultado(s) lançado(s).');
+}
+
+/**
+ * Diagnóstico: lista no log os esportes disponíveis na sua conta
+ * (chamada gratuita) para confirmar o sport key da Copa, e mostra
+ * quantos créditos restam no mês.
+ */
+function listarEsportes() {
+  const resp = UrlFetchApp.fetch(
+    'https://api.the-odds-api.com/v4/sports/?apiKey=' + ODDS_API_KEY,
+    { muteHttpExceptions: true });
+  Logger.log('Créditos restantes: ' + resp.getHeaders()['x-requests-remaining']);
+  JSON.parse(resp.getContentText()).forEach(function (e) {
+    if (e.key.indexOf('soccer') === 0) Logger.log(e.key + ' -> ' + e.title);
+  });
+}
+
+function chamarOddsApi(endpoint, params) {
+  if (ODDS_API_KEY === 'COLE_SUA_CHAVE_AQUI') {
+    throw new Error('Configure ODDS_API_KEY no topo do Code.gs.');
+  }
+  const url = 'https://api.the-odds-api.com/v4/sports/' + ODDS_API_SPORT +
+    '/' + endpoint + '/?apiKey=' + ODDS_API_KEY + params;
+  const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('The Odds API (' + endpoint + '): ' + resp.getContentText());
+  }
+  Logger.log('Créditos restantes: ' + resp.getHeaders()['x-requests-remaining']);
+  return JSON.parse(resp.getContentText());
+}
+
+function traduzirTime(nomeApi) {
+  return NOMES_API[String(nomeApi).trim()] || String(nomeApi).trim();
+}
+
+function chaveTimes(a, b) {
+  return String(a).trim().toLowerCase() + '|' + String(b).trim().toLowerCase();
+}
+
+/** Mapa "timeA|timeB" -> número da linha na aba Jogos (1-based). */
+function indexarJogosPorTimes(aba) {
+  const valores = aba.getDataRange().getValues();
+  const mapa = {};
+  for (var i = 1; i < valores.length; i++) {
+    if (String(valores[i][0]).trim() === '') continue;
+    mapa[chaveTimes(valores[i][3], valores[i][4])] = i + 1;
+  }
+  return mapa;
+}
+
 // ===================== REGRAS DE TEMPO =====================
 
 function jogoBloqueado(dataHora, agora) {
@@ -411,7 +585,10 @@ function lerJogos() {
       timeA: String(l[3]),
       timeB: String(l[4]),
       golsA: l[5],
-      golsB: l[6]
+      golsB: l[6],
+      oddA: l[7], // colunas H/I/J (Odd_A | Odd_Empate | Odd_B), opcionais
+      oddX: l[8],
+      oddB: l[9]
     });
   }
   return jogos;

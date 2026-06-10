@@ -253,6 +253,16 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   box-shadow: 0 2px 14px rgba(0, 151, 57, 0.18);
 }
 
+/* Odds (1 x 2) sob o placar */
+.jogo-odds {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+.jogo-odds b { color: var(--verde-escuro); font-weight: 700; }
+.jogo-odds span { margin: 0 4px; opacity: 0.5; }
+
 /* Jogo bloqueado: placar desabilitado e acinzentado (a lista de
    palpites revelados continua legível). */
 .jogo.bloqueado { background: #f3f5f8; }

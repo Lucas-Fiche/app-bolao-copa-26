@@ -95,6 +95,21 @@ O Apps Script não responde requisições *preflight* (`OPTIONS`). O front-end c
 
 ---
 
+## Odds e placares automáticos (The Odds API) 🎲
+
+Integração opcional com [The Odds API](https://the-odds-api.com) (plano gratuito: 500 créditos/mês):
+
+1. Crie a conta gratuita e cole a chave em `ODDS_API_KEY` no topo do `Code.gs`.
+2. Adicione 3 colunas na aba **Jogos**: `Odd_A | Odd_Empate | Odd_B` (colunas H, I e J).
+3. No Apps Script, rode **`listarEsportes()`** e confira no log se o sport key da Copa é `soccer_fifa_world_cup` (ajuste a constante `ODDS_API_SPORT` se for diferente).
+4. Rode **`atualizarOdds()`** uma vez para testar — as odds médias das casas aparecem nas colunas H–J e nos cards do app.
+5. Crie os acionadores (Acionadores > Adicionar acionador, baseado em tempo):
+   - `atualizarPlacares` a cada **4 horas** (2 créditos/chamada) — preenche `Gols_A_Real`/`Gols_B_Real` dos jogos encerrados; **nunca sobrescreve** um resultado já preenchido.
+   - `atualizarOdds` **1x por dia** (1 crédito/chamada).
+   - Essa cadência consome ~390 créditos/mês, dentro do plano gratuito.
+
+Os nomes dos times vêm em inglês da API e são traduzidos pelo mapa `NOMES_API` no `Code.gs`. Se algum jogo não casar (veja o log das execuções), confira se o nome retornado pela API está no mapa.
+
 ## Melhorias incluídas além do pedido 💡
 
 - **Aba de Ranking** 🥇 com a pontuação de todos os jogadores, direto na tela de palpites.
