@@ -432,6 +432,11 @@ function atualizarOdds() {
 
   const eventos = chamarOddsApi('odds', '&regions=eu&markets=h2h&oddsFormat=decimal');
   const aba = getAba(ABA_JOGOS);
+
+  // Antes de gravar odds, usa os mesmos eventos para substituir os
+  // placeholders do mata-mata ("1º Grupo A" etc.) pelos confrontos reais.
+  preencherConfrontosMataMata(eventos, aba);
+
   const linhaDe = indexarJogosPorTimes(aba);
   var gravados = 0;
 
@@ -528,6 +533,66 @@ function atualizarPlacares() {
     gravados++;
   });
   Logger.log('atualizarPlacares: ' + gravados + ' resultado(s) lançado(s).');
+}
+
+/**
+ * Substitui automaticamente os placeholders do mata-mata pelos confrontos
+ * reais publicados pela API. Critério de casamento: linha de fase (Grupo
+ * não é letra) cujos DOIS times ainda são placeholders (não constam na
+ * lista de seleções) e cujo horário bate com o do evento (±45 min). Só
+ * preenche quando o casamento é único; ambiguidades vão para o log.
+ */
+function preencherConfrontosMataMata(eventos, aba) {
+  const valores = aba.getDataRange().getValues();
+
+  // Seleções conhecidas (nomes PT do mapa, normalizados).
+  const selecoes = {};
+  Object.keys(NOMES_API).forEach(function (k) {
+    selecoes[normalizarNome(NOMES_API[k])] = true;
+  });
+  const ehPlaceholder = function (nome) {
+    return !selecoes[normalizarNome(nome)];
+  };
+
+  // Confrontos que já existem na planilha (para não duplicar).
+  const jaExiste = indexarJogosPorTimes(aba);
+
+  var preenchidos = 0;
+  eventos.forEach(function (ev) {
+    const casa = traduzirTime(ev.home_team);
+    const fora = traduzirTime(ev.away_team);
+    if (ehPlaceholder(casa) || ehPlaceholder(fora)) return; // evento sem times reais
+    if (jaExiste[chaveTimes(casa, fora)] || jaExiste[chaveTimes(fora, casa)]) return;
+
+    const inicio = new Date(ev.commence_time).getTime();
+    if (isNaN(inicio)) return;
+
+    // Candidatas: linhas de mata-mata com placeholders e horário compatível.
+    const candidatas = [];
+    for (var i = 1; i < valores.length; i++) {
+      const l = valores[i];
+      if (String(l[0]).trim() === '') continue;
+      if (normalizarNome(l[1]).length <= 1) continue; // fase de grupos
+      if (!ehPlaceholder(l[3]) || !ehPlaceholder(l[4])) continue;
+      const dataHora = parseDataHora(l[2]);
+      if (!dataHora) continue;
+      if (Math.abs(dataHora.getTime() - inicio) <= 45 * 60 * 1000) candidatas.push(i + 1);
+    }
+
+    if (candidatas.length === 1) {
+      aba.getRange(candidatas[0], 4, 1, 2).setValues([[casa, fora]]);
+      valores[candidatas[0] - 1][3] = casa;
+      valores[candidatas[0] - 1][4] = fora;
+      jaExiste[chaveTimes(casa, fora)] = candidatas[0];
+      preenchidos++;
+    } else if (candidatas.length > 1) {
+      Logger.log('Mata-mata: "' + casa + ' x ' + fora + '" tem ' + candidatas.length +
+        ' linhas com o mesmo horário — preencha manualmente (linhas ' + candidatas.join(', ') + ').');
+    }
+  });
+  if (preenchidos) {
+    Logger.log('Mata-mata: ' + preenchidos + ' confronto(s) preenchido(s) automaticamente.');
+  }
 }
 
 /**
