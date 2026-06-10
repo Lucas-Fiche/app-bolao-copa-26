@@ -47,6 +47,43 @@ function nomeComBandeira(time) {
   return f ? f + ' ' + time : time;
 }
 
+// ===================== FASES =====================
+
+const normaliza = (s) => String(s).toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, ' ').trim();
+
+const ehGrupoLetra = (g) => normaliza(g).length <= 1;
+
+// "A" -> "Grupo A"; "Oitavas" -> "Oitavas"
+const rotuloGrupo = (g) => ehGrupoLetra(g) ? 'Grupo ' + g : g;
+
+// Ordem das abas: grupos A–L primeiro, depois as fases do mata-mata.
+function pesoFase(g) {
+  const n = normaliza(g);
+  if (n.length <= 1) return 0;
+  if (n.includes('16')) return 1;
+  if (n.includes('oitava')) return 2;
+  if (n.includes('quarta')) return 3;
+  if (n.includes('semi')) return 4;
+  if (n.includes('3') || n.includes('terceiro')) return 5;
+  if (n.includes('final')) return 6;
+  return 9;
+}
+
+// Espelho da tabela de pontuação do back-end (exibição apenas).
+function pontuacaoDaFase(g) {
+  const n = normaliza(g);
+  if (n.length <= 1) return { placar: 3, vencedor: 1 };
+  if (n.includes('16')) return { placar: 4, vencedor: 2 };
+  if (n.includes('oitava')) return { placar: 5, vencedor: 2 };
+  if (n.includes('quarta')) return { placar: 6, vencedor: 3 };
+  if (n.includes('semi')) return { placar: 8, vencedor: 4 };
+  if (n.includes('3') || n.includes('terceiro')) return { placar: 6, vencedor: 3 };
+  if (n.includes('final')) return { placar: 10, vencedor: 5 };
+  return { placar: 3, vencedor: 1 };
+}
+
 // ===================== HELPERS =====================
 
 const $ = (sel) => document.querySelector(sel);
@@ -99,7 +136,8 @@ async function init() {
     estado.ranking = dados.ranking;
     estado.rankingBrasil = dados.rankingBrasil || null; // null = back-end antigo
     estado.bonusBloqueado = dados.bonusBloqueado;
-    estado.grupos = [...new Set(dados.jogos.map(j => j.grupo))].sort();
+    estado.grupos = [...new Set(dados.jogos.map(j => j.grupo))]
+      .sort((a, b) => pesoFase(a) - pesoFase(b) || a.localeCompare(b, 'pt'));
 
     const select = $('#select-nome');
     dados.jogadores.forEach(nome => {
@@ -298,7 +336,7 @@ function montarAbas() {
   nav.appendChild(criarAba('📅 Hoje', 'hoje'));
   nav.appendChild(criarAba('🇧🇷', 'brasil'));
   estado.grupos.forEach(grupo => {
-    nav.appendChild(criarAba('Grupo ' + grupo, grupo));
+    nav.appendChild(criarAba(rotuloGrupo(grupo), grupo));
   });
 }
 
@@ -365,8 +403,9 @@ function montarPaineisDeGrupos() {
     painel.dataset.painel = grupo;
     painel.hidden = true;
 
+    const f = pontuacaoDaFase(grupo);
     const titulo = document.createElement('h2');
-    titulo.textContent = 'Grupo ' + grupo;
+    titulo.innerHTML = `${rotuloGrupo(grupo)} <small>🎯 placar ${f.placar} pts · ✅ vencedor ${f.vencedor} pt${f.vencedor > 1 ? 's' : ''}</small>`;
     painel.appendChild(titulo);
 
     estado.jogos
@@ -445,7 +484,7 @@ function criarCardJogo(jogo, comGrupo) {
 
   card.innerHTML = `
     <div class="jogo-data">📅 ${jogo.dataHoraTexto}${comGrupo
-      ? ` <span class="badge-grupo">Grupo ${jogo.grupo}</span>` : ''}</div>
+      ? ` <span class="badge-grupo">${rotuloGrupo(jogo.grupo)}</span>` : ''}</div>
     ${encerrado
       ? `<div class="jogo-resultado">⚽ Placar final: <b>${jogo.golsAReal} x ${jogo.golsBReal}</b></div>` : ''}
     <div class="jogo-placar">
@@ -481,8 +520,8 @@ function criarCardJogo(jogo, comGrupo) {
       const li = document.createElement('li');
       const esqueceu = p.esqueceu || p.golsA === null;
       const selo = p.pontos === null ? ''
-        : p.pontos === 3 ? '<span class="pts pts-3">🎯 +3</span>'
-        : p.pontos === 1 ? '<span class="pts pts-1">+1</span>'
+        : p.exato ? `<span class="pts pts-3">🎯 +${p.pontos}</span>`
+        : p.pontos > 0 ? `<span class="pts pts-1">+${p.pontos}</span>`
         : esqueceu ? '<span class="pts pts-zzz">0</span>'
         : '<span class="pts pts-0">0</span>';
       const eu = p.nome === estado.nome ? ' <small>(você)</small>' : '';

@@ -33,10 +33,25 @@ const ABA_JOGOS = 'Jogos';
 const ABA_PALPITES = 'Palpites';
 
 const MINUTOS_BLOQUEIO = 30;
-const PONTOS_PLACAR_EXATO = 3;
-const PONTOS_VENCEDOR = 1;
-const PONTOS_CAMPEAO = 10;
-const PONTOS_ARTILHEIRO = 10;
+const PONTOS_CAMPEAO = 15;
+const PONTOS_ARTILHEIRO = 15;
+
+/**
+ * Pontuação por fase, definida pelo valor da coluna "Grupo" da aba Jogos.
+ * Letras (A–L) = fase de grupos. Para o mata-mata, cadastre os jogos com
+ * Grupo = "16 avos", "Oitavas", "Quartas", "Semifinal", "3º lugar", "Final".
+ */
+function pontuacaoDaFase(grupo) {
+  const g = normalizarNome(grupo);
+  if (g.length <= 1) return { placar: 3, vencedor: 1 };             // grupos A–L
+  if (g.indexOf('16') !== -1) return { placar: 4, vencedor: 2 };     // 16 avos
+  if (g.indexOf('oitava') !== -1) return { placar: 5, vencedor: 2 };
+  if (g.indexOf('quarta') !== -1) return { placar: 6, vencedor: 3 };
+  if (g.indexOf('semi') !== -1) return { placar: 8, vencedor: 4 };
+  if (g.indexOf('3') !== -1 || g.indexOf('terceiro') !== -1) return { placar: 6, vencedor: 3 };
+  if (g.indexOf('final') !== -1) return { placar: 10, vencedor: 5 };
+  return { placar: 3, vencedor: 1 };
+}
 
 // Preencha no fim do torneio e rode atualizarPontuacao() para aplicar o bônus.
 const CAMPEAO_REAL = '';
@@ -176,19 +191,22 @@ function montarPalpitesRevelados(jogadores, jogos, agora) {
 
   iniciados.forEach(function (jogo) {
     const temResultado = jogo.golsA !== '' && jogo.golsB !== '';
+    const fase = pontuacaoDaFase(jogo.grupo);
     porJogo[jogo.id] = jogadores.map(function (j) {
       const p = palpitesDe[j.nome + '|' + String(jogo.id)];
       if (!p) {
         return { nome: j.nome, golsA: null, golsB: null, esqueceu: true,
-                 pontos: temResultado ? 0 : null };
+                 pontos: temResultado ? 0 : null, exato: false };
       }
+      const pts = temResultado
+        ? pontosDoPalpite(Number(p.golsA), Number(p.golsB), Number(jogo.golsA), Number(jogo.golsB), fase)
+        : null;
       return {
         nome: j.nome,
         golsA: Number(p.golsA),
         golsB: Number(p.golsB),
-        pontos: temResultado
-          ? pontosDoPalpite(Number(p.golsA), Number(p.golsB), Number(jogo.golsA), Number(jogo.golsB))
-          : null
+        pontos: pts,
+        exato: pts !== null && pts === fase.placar
       };
     }).sort(function (a, b) {
       return (b.pontos || 0) - (a.pontos || 0) || a.nome.localeCompare(b.nome);
@@ -312,12 +330,13 @@ function montarRankings(jogadores, jogos) {
     lista.forEach(function (jogo) {
       const palpite = palpitesDe[nome + '|' + String(jogo.id)];
       if (!palpite) return; // não palpitou: 0 ponto neste jogo
+      const fase = pontuacaoDaFase(jogo.grupo);
       const pts = pontosDoPalpite(
         Number(palpite.golsA), Number(palpite.golsB),
-        Number(jogo.golsA), Number(jogo.golsB)
+        Number(jogo.golsA), Number(jogo.golsB), fase
       );
       pontos += pts;
-      if (pts === PONTOS_PLACAR_EXATO) exatos++;
+      if (pts === fase.placar) exatos++;
     });
     return { pontos: pontos, exatos: exatos };
   }
@@ -375,7 +394,8 @@ function atualizarPontuacao() {
       if (!palpite) return; // não palpitou: 0 ponto neste jogo
       total += pontosDoPalpite(
         Number(palpite.golsA), Number(palpite.golsB),
-        Number(jogo.golsA), Number(jogo.golsB)
+        Number(jogo.golsA), Number(jogo.golsB),
+        pontuacaoDaFase(jogo.grupo)
       );
     });
 
@@ -386,10 +406,10 @@ function atualizarPontuacao() {
   }
 }
 
-function pontosDoPalpite(palpiteA, palpiteB, realA, realB) {
-  if (palpiteA === realA && palpiteB === realB) return PONTOS_PLACAR_EXATO;
+function pontosDoPalpite(palpiteA, palpiteB, realA, realB, fase) {
+  if (palpiteA === realA && palpiteB === realB) return fase.placar;
   const sinal = function (a, b) { return a > b ? 1 : (a < b ? -1 : 0); };
-  if (sinal(palpiteA, palpiteB) === sinal(realA, realB)) return PONTOS_VENCEDOR;
+  if (sinal(palpiteA, palpiteB) === sinal(realA, realB)) return fase.vencedor;
   return 0;
 }
 

@@ -82,8 +82,8 @@ Crie uma planilha com **3 abas** (nomes exatos):
 
 | Regra | Onde é aplicada |
 |-------|-----------------|
-| Placar exato = **3 pts**, vencedor/empate = **1 pt**, erro = **0** | `atualizarPontuacao()` no back-end |
-| Bônus Campeão/Artilheiro = **10 pts cada**, travados no pontapé inicial do 1º jogo | back-end valida; front-end desabilita os campos |
+| Pontuação por fase (placar exato / vencedor): Grupos **3/1** · 16 avos **4/2** · Oitavas **5/2** · Quartas **6/3** · Semifinal **8/4** · 3º lugar **6/3** · Final **10/5** | `pontuacaoDaFase()` no back-end, pela coluna `Grupo` |
+| Bônus Campeão/Artilheiro = **15 pts cada**, travados ao salvar (e no máximo no 1º jogo) | back-end valida; front-end desabilita os campos |
 | **Regra dos 30 min**: jogo a menos de 30 min (ou já iniciado) rejeita alteração, mas salva o resto do pacote | back-end (`salvarPalpites`) usa o relógio do servidor; front-end "cinza" os jogos |
 | **Esquecimento**: sem palpite = **0 ponto** no jogo (um 0x0 automático premiaria quem esqueceu em jogos sem gols) | back-end ignora jogos sem palpite ao pontuar; lista revelada mostra "💤 esqueceu" |
 | **Upsert**: nunca duplica linha por (Nome, ID_Jogo) | back-end com `LockService` contra salvamentos simultâneos |
@@ -123,4 +123,4 @@ Os nomes dos times vêm em inglês da API e são traduzidos pelo mapa `NOMES_API
 
 - Acionador `onEdit`/tempo para recalcular pontos automaticamente ao lançar resultados.
 - Hash do PIN na planilha (hoje é texto puro — ok para bolão entre amigos, mas o dono da planilha vê os PINs).
-- Fase de mata-mata: basta usar valores como `Oitavas`, `Quartas` etc. na coluna `Grupo` — o app cria as abas dinamicamente.
+- Fase de mata-mata: cadastre os jogos com `Grupo` = `16 avos`, `Oitavas`, `Quartas`, `Semifinal`, `3º lugar` ou `Final` — o app cria as abas na ordem certa e aplica a pontuação da fase automaticamente. Enquanto os confrontos não estiverem definidos, use nomes provisórios (ex.: `1º Grupo A`); ao trocar pelos nomes reais, bandeiras e odds passam a funcionar.
