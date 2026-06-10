@@ -264,6 +264,7 @@ function montarAbas() {
   const nav = $('#abas');
   nav.innerHTML = '';
   nav.appendChild(criarAba('📅 Hoje', 'hoje'));
+  nav.appendChild(criarAba('🇧🇷', 'brasil'));
   estado.grupos.forEach(grupo => {
     nav.appendChild(criarAba('Grupo ' + grupo, grupo));
   });
@@ -304,6 +305,27 @@ function montarPaineisDeGrupos() {
   painelHoje.id = 'painel-hoje';
   painelHoje.hidden = true;
   container.appendChild(painelHoje);
+
+  // Painel "Brasil": só os jogos da Seleção, em qualquer fase.
+  const painelBrasil = document.createElement('div');
+  painelBrasil.className = 'painel';
+  painelBrasil.dataset.painel = 'brasil';
+  painelBrasil.hidden = true;
+  const tituloBrasil = document.createElement('h2');
+  tituloBrasil.textContent = '🇧🇷 Jogos do Brasil';
+  painelBrasil.appendChild(tituloBrasil);
+  const jogosBrasil = estado.jogos
+    .filter(j => [j.timeA, j.timeB].some(t => String(t).trim() === 'Brasil'))
+    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  if (jogosBrasil.length) {
+    jogosBrasil.forEach(jogo => painelBrasil.appendChild(criarCardJogo(jogo, true)));
+  } else {
+    const p = document.createElement('p');
+    p.className = 'aviso';
+    p.textContent = 'Nenhum jogo do Brasil cadastrado.';
+    painelBrasil.appendChild(p);
+  }
+  container.appendChild(painelBrasil);
 
   estado.grupos.forEach(grupo => {
     const painel = document.createElement('div');
