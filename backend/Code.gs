@@ -113,9 +113,9 @@ function montarInit() {
 /**
  * Palpites revelados: somente de jogos que JÁ COMEÇARAM (e que portanto
  * estão travados há pelo menos 30 minutos — impossível copiar). Jogos
- * futuros nunca têm os palpites enviados ao app. Quem não palpitou entra
- * como 0x0 (Regra do Esquecimento); com resultado lançado, cada palpite
- * recebe os pontos ganhos.
+ * futuros nunca têm os palpites enviados ao app. Quem não palpitou
+ * aparece como "esqueceu" e marca 0 ponto; com resultado lançado, cada
+ * palpite recebe os pontos ganhos.
  */
 function montarPalpitesRevelados(jogadores, jogos, agora) {
   const porJogo = {};
@@ -132,7 +132,11 @@ function montarPalpitesRevelados(jogadores, jogos, agora) {
   iniciados.forEach(function (jogo) {
     const temResultado = jogo.golsA !== '' && jogo.golsB !== '';
     porJogo[jogo.id] = jogadores.map(function (j) {
-      const p = palpitesDe[j.nome + '|' + String(jogo.id)] || { golsA: 0, golsB: 0 };
+      const p = palpitesDe[j.nome + '|' + String(jogo.id)];
+      if (!p) {
+        return { nome: j.nome, golsA: null, golsB: null, esqueceu: true,
+                 pontos: temResultado ? 0 : null };
+      }
       return {
         nome: j.nome,
         golsA: Number(p.golsA),
@@ -242,7 +246,8 @@ function salvarPalpites(payload) {
  * Calcula os rankings em tempo real a partir dos palpites e dos jogos
  * com resultado lançado: o geral (com bônus de campeão/artilheiro) e o
  * só com jogos do Brasil. Desempate: mais placares exatos, depois nome.
- * Regra do Esquecimento: jogo encerrado sem palpite conta como 0x0.
+ * Quem não palpitou marca 0 ponto no jogo (sem palpite, sem pontos —
+ * um 0x0 automático premiaria o esquecimento em jogos sem gols).
  */
 function montarRankings(jogadores, jogos) {
   const finalizados = jogos.filter(function (j) {
@@ -260,7 +265,8 @@ function montarRankings(jogadores, jogos) {
   function somarPontos(nome, lista) {
     var pontos = 0, exatos = 0;
     lista.forEach(function (jogo) {
-      const palpite = palpitesDe[nome + '|' + String(jogo.id)] || { golsA: 0, golsB: 0 };
+      const palpite = palpitesDe[nome + '|' + String(jogo.id)];
+      if (!palpite) return; // não palpitou: 0 ponto neste jogo
       const pts = pontosDoPalpite(
         Number(palpite.golsA), Number(palpite.golsB),
         Number(jogo.golsA), Number(jogo.golsB)
@@ -299,7 +305,7 @@ function montarRankings(jogadores, jogos) {
  * Rode manualmente após lançar resultados na aba "Jogos", ou crie um
  * acionador (Acionadores > Adicionar acionador > baseado em tempo, a cada hora).
  *
- * Regra do Esquecimento: jogo encerrado sem palpite conta como 0x0.
+ * Quem não palpitou marca 0 ponto no jogo (sem palpite, sem pontos).
  */
 function atualizarPontuacao() {
   const jogosFinalizados = lerJogos().filter(function (j) {
@@ -320,7 +326,8 @@ function atualizarPontuacao() {
     var total = 0;
 
     jogosFinalizados.forEach(function (jogo) {
-      const palpite = palpitesDe[nome + '|' + String(jogo.id)] || { golsA: 0, golsB: 0 };
+      const palpite = palpitesDe[nome + '|' + String(jogo.id)];
+      if (!palpite) return; // não palpitou: 0 ponto neste jogo
       total += pontosDoPalpite(
         Number(palpite.golsA), Number(palpite.golsB),
         Number(jogo.golsA), Number(jogo.golsB)

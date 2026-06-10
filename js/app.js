@@ -468,13 +468,18 @@ function criarCardJogo(jogo, comGrupo) {
     ul.hidden = true;
     jogo.palpites.forEach(p => {
       const li = document.createElement('li');
+      const esqueceu = p.esqueceu || p.golsA === null;
+      const errado = p.pontos === 0; // palpite incorreto (ou esquecido) já com resultado
       const selo = p.pontos === null ? ''
         : p.pontos === 3 ? '<span class="pts pts-3">🎯 +3</span>'
         : p.pontos === 1 ? '<span class="pts pts-1">+1</span>'
         : '<span class="pts pts-0">0</span>';
       const eu = p.nome === estado.nome ? ' <small>(você)</small>' : '';
-      li.innerHTML = `<span class="p-nome">${p.nome}${eu}</span>
-                      <span class="p-placar">${p.golsA} x ${p.golsB}</span>${selo}`;
+      const placar = esqueceu
+        ? '<span class="p-placar p-errado">💤 esqueceu</span>'
+        : `<span class="p-placar${errado ? ' p-errado' : ''}">${p.golsA} x ${p.golsB}</span>`;
+      if (errado) li.classList.add('palpite-errado');
+      li.innerHTML = `<span class="p-nome">${p.nome}${eu}</span>${placar}${selo}`;
       ul.appendChild(li);
     });
 
@@ -590,8 +595,7 @@ $('#btn-salvar').addEventListener('click', async () => {
 
   try {
     // Envia somente jogos com placar completo e ainda não bloqueados.
-    // Jogos sem palpite ficam de fora: a Regra do Esquecimento (0x0)
-    // é aplicada pelo back-end na hora de pontuar.
+    // Jogos sem palpite ficam de fora e simplesmente não pontuam.
     const palpites = [];
     estado.jogos.forEach(jogo => {
       if (jogoBloqueado(jogo)) return;

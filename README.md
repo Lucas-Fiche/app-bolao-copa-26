@@ -85,7 +85,7 @@ Crie uma planilha com **3 abas** (nomes exatos):
 | Placar exato = **3 pts**, vencedor/empate = **1 pt**, erro = **0** | `atualizarPontuacao()` no back-end |
 | Bônus Campeão/Artilheiro = **10 pts cada**, travados no pontapé inicial do 1º jogo | back-end valida; front-end desabilita os campos |
 | **Regra dos 30 min**: jogo a menos de 30 min (ou já iniciado) rejeita alteração, mas salva o resto do pacote | back-end (`salvarPalpites`) usa o relógio do servidor; front-end "cinza" os jogos |
-| **Regra do Esquecimento**: sem palpite = considera **0x0** | `atualizarPontuacao()` usa `0x0` como padrão |
+| **Esquecimento**: sem palpite = **0 ponto** no jogo (um 0x0 automático premiaria quem esqueceu em jogos sem gols) | back-end ignora jogos sem palpite ao pontuar; lista revelada mostra "💤 esqueceu" |
 | **Upsert**: nunca duplica linha por (Nome, ID_Jogo) | back-end com `LockService` contra salvamentos simultâneos |
 | **Memória**: palpites salvos são carregados no login; rascunhos ficam no `localStorage` enquanto navega | front-end |
 
