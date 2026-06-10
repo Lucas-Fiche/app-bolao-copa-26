@@ -65,6 +65,19 @@ function pontuacaoDaFase(grupo) {
 const CAMPEAO_REAL = '';
 const ARTILHEIRO_REAL = '';
 
+// Jogadores "fantasma" (ex.: usuário admin de testes): logam e palpitam
+// normalmente, mas não aparecem em rankings, palpites revelados,
+// histórico nem recebem lembretes. Use o nome exato da aba Jogadores.
+const JOGADORES_OCULTOS = ['Admin'];
+
+function ehOculto(nome) {
+  return JOGADORES_OCULTOS.some(function (n) { return mesmoTexto(n, nome); });
+}
+
+function jogadoresVisiveis(jogadores) {
+  return jogadores.filter(function (j) { return !ehOculto(j.nome); });
+}
+
 // ===== The Odds API (the-odds-api.com) — odds e placares automáticos =====
 // 1. Crie uma conta gratuita e cole a chave abaixo.
 // 2. Rode listarEsportes() e confira no log o sport key da Copa
@@ -149,8 +162,10 @@ function montarInit() {
   const jogadores = lerJogadores();
   const jogos = lerJogos();
   const agora = new Date();
-  const rankings = montarRankings(jogadores, jogos);
-  const palpitesPorJogo = montarPalpitesRevelados(jogadores, jogos, agora);
+  // Estatísticas consideram só os jogadores visíveis (admin fica de fora).
+  const visiveis = jogadoresVisiveis(jogadores);
+  const rankings = montarRankings(visiveis, jogos);
+  const palpitesPorJogo = montarPalpitesRevelados(visiveis, jogos, agora);
   return {
     ok: true,
     serverTime: agora.getTime(),
@@ -748,7 +763,7 @@ function enviarLembretes() {
   });
 
   var enviados = 0;
-  lerJogadores().forEach(function (j) {
+  jogadoresVisiveis(lerJogadores()).forEach(function (j) {
     if (!temTexto(j.email)) return;
     const pendentes = jogosAmanha.filter(function (g) {
       return !temPalpite[j.nome + '|' + String(g.id)];
@@ -778,7 +793,7 @@ function enviarLembretes() {
  * Acionador sugerido: diário, entre 6h e 7h.
  */
 function salvarHistorico() {
-  const ranking = montarRankings(lerJogadores(), lerJogos()).geral;
+  const ranking = montarRankings(jogadoresVisiveis(lerJogadores()), lerJogos()).geral;
   var aba = getPlanilha().getSheetByName(ABA_HISTORICO);
   if (!aba) {
     aba = getPlanilha().insertSheet(ABA_HISTORICO);
