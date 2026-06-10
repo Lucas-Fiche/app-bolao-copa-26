@@ -405,25 +405,18 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   color: var(--texto-suave);
 }
 .ranking .pontos { color: var(--verde-escuro); font-weight: 700; }
-.ranking .seta {
-  color: var(--texto-suave);
-  font-size: 0.8rem;
-  transition: transform 0.2s;
-}
-.ranking li.aberto .seta { transform: rotate(180deg); }
 
-/* Detalhe expansível: palpites de campeão e artilheiro do jogador */
+/* Palpites de campeão e artilheiro, sempre visíveis */
 .ranking .detalhe {
-  display: none;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 16px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 16px 12px;
   border-top: 1px dashed var(--borda);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--texto-suave);
 }
-.ranking li.aberto .detalhe { display: flex; }
-.ranking .detalhe strong { color: var(--texto); }
+.ranking .detalhe strong { color: var(--texto); font-weight: 600; }
 
 /* ===== Tema 🇧🇷 da visão "Jogos do Brasil" ===== */
 
