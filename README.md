@@ -83,7 +83,7 @@ Crie uma planilha com **3 abas** (nomes exatos):
 | Regra | Onde é aplicada |
 |-------|-----------------|
 | Pontuação por fase (placar exato / vencedor): Grupos **3/1** · 16 avos **4/2** · Oitavas **5/2** · Quartas **6/3** · Semifinal **8/4** · 3º lugar **6/3** · Final **10/5** | `pontuacaoDaFase()` no back-end, pela coluna `Grupo` |
-| Bônus Campeão/Artilheiro = **15 pts cada**, travados ao salvar (e no máximo no 1º jogo) | back-end valida; front-end desabilita os campos |
+| Bônus Campeão/Artilheiro = **20 pts cada** (**30** se for o único a acertar a categoria), travados ao salvar (e no máximo no 1º jogo) | `pontosDeBonus()` no back-end; front-end desabilita os campos |
 | **Regra dos 30 min**: jogo a menos de 30 min (ou já iniciado) rejeita alteração, mas salva o resto do pacote | back-end (`salvarPalpites`) usa o relógio do servidor; front-end "cinza" os jogos |
 | **Esquecimento**: sem palpite = **0 ponto** no jogo (um 0x0 automático premiaria quem esqueceu em jogos sem gols) | back-end ignora jogos sem palpite ao pontuar; lista revelada mostra "💤 esqueceu" |
 | **Upsert**: nunca duplica linha por (Nome, ID_Jogo) | back-end com `LockService` contra salvamentos simultâneos |

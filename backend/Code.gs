@@ -33,8 +33,8 @@ const ABA_JOGOS = 'Jogos';
 const ABA_PALPITES = 'Palpites';
 
 const MINUTOS_BLOQUEIO = 30;
-const PONTOS_CAMPEAO = 15;
-const PONTOS_ARTILHEIRO = 15;
+const PONTOS_BONUS = 20;          // acertou campeão ou artilheiro
+const PONTOS_BONUS_SOZINHO = 30;  // foi o ÚNICO a acertar aquela categoria
 
 // Palpites do mata-mata ficam bloqueados até esta data (fim da fase de
 // grupos). Formato dd/mm/aaaa hh:mm:ss, no fuso horário do script.
@@ -317,6 +317,28 @@ function salvarPalpites(payload) {
 // ===================== PONTUAÇÃO =====================
 
 /**
+ * Pontos de bônus (campeão/artilheiro): 20 por acerto, 30 se o jogador
+ * for o único do bolão a acertar aquela categoria. Retorna uma função
+ * que calcula o bônus de cada jogador (as contagens são feitas uma vez).
+ */
+function pontosDeBonus(jogadores) {
+  const acertouCampeao = function (j) {
+    return temTexto(CAMPEAO_REAL) && mesmoTexto(j.campeao, CAMPEAO_REAL);
+  };
+  const acertouArtilheiro = function (j) {
+    return temTexto(ARTILHEIRO_REAL) && mesmoTexto(j.artilheiro, ARTILHEIRO_REAL);
+  };
+  const nCampeao = jogadores.filter(acertouCampeao).length;
+  const nArtilheiro = jogadores.filter(acertouArtilheiro).length;
+  return function (j) {
+    var pts = 0;
+    if (acertouCampeao(j)) pts += (nCampeao === 1 ? PONTOS_BONUS_SOZINHO : PONTOS_BONUS);
+    if (acertouArtilheiro(j)) pts += (nArtilheiro === 1 ? PONTOS_BONUS_SOZINHO : PONTOS_BONUS);
+    return pts;
+  };
+}
+
+/**
  * Calcula os rankings em tempo real a partir dos palpites e dos jogos
  * com resultado lançado: o geral (com bônus de campeão/artilheiro) e o
  * só com jogos do Brasil. Desempate: mais placares exatos, depois nome.
@@ -353,12 +375,12 @@ function montarRankings(jogadores, jogos) {
   }
 
   const geral = [], brasil = [];
+  const bonusDe = pontosDeBonus(jogadores);
   jogadores.forEach(function (j) {
-    // Campeão e artilheiro entram no ranking para o detalhe expansível
-    // de cada jogador no app (os palpites de bônus são definitivos).
+    // Campeão e artilheiro entram no ranking para o detalhe de cada
+    // jogador no app (os palpites de bônus são definitivos).
     const g = somarPontos(j.nome, finalizados);
-    if (temTexto(CAMPEAO_REAL) && mesmoTexto(j.campeao, CAMPEAO_REAL)) g.pontos += PONTOS_CAMPEAO;
-    if (temTexto(ARTILHEIRO_REAL) && mesmoTexto(j.artilheiro, ARTILHEIRO_REAL)) g.pontos += PONTOS_ARTILHEIRO;
+    g.pontos += bonusDe(j);
     geral.push({ nome: j.nome, pontos: g.pontos, exatos: g.exatos,
                  campeao: j.campeao, artilheiro: j.artilheiro });
 
@@ -394,6 +416,7 @@ function atualizarPontuacao() {
 
   const sheet = getAba(ABA_JOGADORES);
   const valores = sheet.getDataRange().getValues();
+  const bonusDe = pontosDeBonus(lerJogadores());
 
   for (var i = 1; i < valores.length; i++) {
     const nome = String(valores[i][0]).trim();
@@ -410,8 +433,7 @@ function atualizarPontuacao() {
       );
     });
 
-    if (temTexto(CAMPEAO_REAL) && mesmoTexto(valores[i][2], CAMPEAO_REAL)) total += PONTOS_CAMPEAO;
-    if (temTexto(ARTILHEIRO_REAL) && mesmoTexto(valores[i][3], ARTILHEIRO_REAL)) total += PONTOS_ARTILHEIRO;
+    total += bonusDe({ campeao: valores[i][2], artilheiro: valores[i][3] });
 
     sheet.getRange(i + 1, 5).setValue(total); // coluna Pontuacao_Total
   }
@@ -872,8 +894,9 @@ function temTexto(v) {
   return v !== null && v !== undefined && String(v).trim() !== '';
 }
 
+// Compara ignorando maiúsculas, acentos e pontuação ("Mbappé" == "mbappe").
 function mesmoTexto(a, b) {
-  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  return normalizarNome(a) !== '' && normalizarNome(a) === normalizarNome(b);
 }
 
 function responderJson(obj) {
