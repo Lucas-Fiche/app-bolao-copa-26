@@ -476,7 +476,7 @@ function criarCardJogo(jogo, comGrupo) {
         : '<span class="pts pts-0">0</span>';
       const eu = p.nome === estado.nome ? ' <small>(você)</small>' : '';
       const placar = esqueceu
-        ? '<span class="p-placar p-esqueceu">💤 esqueceu</span>'
+        ? '<span class="p-placar p-esqueceu">💤</span>'
         : `<span class="p-placar">${p.golsA} x ${p.golsB}</span>`;
       li.innerHTML = `<span class="p-nome">${p.nome}${eu}</span>${placar}${selo}`;
       ul.appendChild(li);

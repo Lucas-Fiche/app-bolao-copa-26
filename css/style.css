@@ -272,12 +272,12 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 .ver-palpites {
   width: 100%;
   margin-top: 10px;
-  padding: 9px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--texto-suave);
-  background: var(--fundo);
-  border: 1px solid var(--borda);
+  padding: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  background: var(--verde-claro);
+  border: 1px solid rgba(12, 175, 96, 0.35);
   border-radius: 10px;
   cursor: pointer;
 }
