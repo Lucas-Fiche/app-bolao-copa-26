@@ -6,6 +6,7 @@
 const MINUTOS_BLOQUEIO = 30;
 const CHAVE_SESSAO = 'bolao26_sessao';
 const chaveRascunho = (nome) => 'bolao26_rascunho_' + nome;
+const chaveSalvos = (nome) => 'bolao26_salvos_' + nome; // backup do que já foi salvo
 
 const estado = {
   nome: null,
@@ -153,14 +154,26 @@ async function fazerLogin(nome, pin, silencioso) {
       };
     });
 
-    // Rascunho local (digitado e não salvo) tem prioridade sobre o
-    // servidor, exceto em jogos já bloqueados.
+    // Backup local do que já foi salvo: cobre qualquer falha na leitura
+    // do servidor. O servidor, quando responde, sempre tem prioridade.
+    const salvos = JSON.parse(localStorage.getItem(chaveSalvos(estado.nome)) || '{}');
+    Object.keys(salvos).forEach(id => {
+      if (estado.palpites[id] === undefined) estado.palpites[id] = salvos[id];
+    });
+
+    // Rascunho local (digitado e não salvo) sobrepõe o servidor apenas
+    // se estiver completo — um rascunho com campo vazio nunca apaga um
+    // palpite já salvo. Jogos bloqueados ignoram rascunho.
     const rascunho = JSON.parse(localStorage.getItem(chaveRascunho(estado.nome)) || 'null');
     if (rascunho) {
       const bloqueadoPorId = {};
       estado.jogos.forEach(j => { bloqueadoPorId[j.id] = jogoBloqueado(j); });
       Object.keys(rascunho.palpites || {}).forEach(id => {
-        if (!bloqueadoPorId[id]) estado.palpites[id] = rascunho.palpites[id];
+        if (bloqueadoPorId[id]) return;
+        const r = rascunho.palpites[id] || {};
+        const completo = r.golsA !== '' && r.golsA !== undefined &&
+                         r.golsB !== '' && r.golsB !== undefined;
+        if (completo || estado.palpites[id] === undefined) estado.palpites[id] = r;
       });
     }
 
@@ -597,6 +610,16 @@ $('#btn-salvar').addEventListener('click', async () => {
     });
 
     if (!resp.ok) throw new Error(resp.erro || 'Erro ao salvar.');
+
+    // Backup local do que acabou de ser salvo (só os aceitos pelo servidor).
+    const aceitos = new Set((resp.salvos || []).map(String));
+    const backup = JSON.parse(localStorage.getItem(chaveSalvos(estado.nome)) || '{}');
+    palpites.forEach(p => {
+      if (aceitos.has(String(p.idJogo))) {
+        backup[p.idJogo] = { golsA: p.golsA, golsB: p.golsB };
+      }
+    });
+    localStorage.setItem(chaveSalvos(estado.nome), JSON.stringify(backup));
 
     localStorage.removeItem(chaveRascunho(estado.nome));
     $('#topo-status').textContent = 'Tudo salvo ✔';
