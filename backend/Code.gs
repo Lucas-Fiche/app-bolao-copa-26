@@ -52,6 +52,7 @@ function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) || 'init';
     if (action === 'init') return responderJson(montarInit());
+    if (action === 'debug') return responderJson(montarDebug());
     return responderJson({ ok: false, erro: 'Ação desconhecida: ' + action });
   } catch (err) {
     return responderJson({ ok: false, erro: String(err) });
@@ -287,19 +288,26 @@ function lerJogadores() {
 
 /** Jogos: ID_Jogo | Grupo | Data_Hora | Time_A | Time_B | Gols_A_Real | Gols_B_Real */
 function lerJogos() {
-  return getAba(ABA_JOGOS).getDataRange().getValues().slice(1)
-    .filter(function (l) { return String(l[0]).trim() !== ''; })
-    .map(function (l) {
-      return {
-        id: String(l[0]).trim(),
-        grupo: String(l[1]).trim(),
-        dataHora: parseDataHora(l[2]),
-        timeA: String(l[3]),
-        timeB: String(l[4]),
-        golsA: l[5],
-        golsB: l[6]
-      };
+  const intervalo = getAba(ABA_JOGOS).getDataRange();
+  const valores = intervalo.getValues();
+  // Plano B para a Data_Hora: se o valor bruto não puder ser interpretado,
+  // tenta o texto exibido na célula (ex.: "11/06/2026 16:00:00").
+  const exibidos = intervalo.getDisplayValues();
+  const jogos = [];
+  for (var i = 1; i < valores.length; i++) {
+    const l = valores[i];
+    if (String(l[0]).trim() === '') continue;
+    jogos.push({
+      id: String(l[0]).trim(),
+      grupo: String(l[1]).trim(),
+      dataHora: parseDataHora(l[2]) || parseDataHora(exibidos[i][2]),
+      timeA: String(l[3]),
+      timeB: String(l[4]),
+      golsA: l[5],
+      golsB: l[6]
     });
+  }
+  return jogos;
 }
 
 /** Palpites: Nome | ID_Jogo | Palpite_Gols_A | Palpite_Gols_B | Ultima_Atualizacao */
@@ -340,15 +348,44 @@ function autenticar(nome, pin) {
 }
 
 /**
- * Aceita tanto células de data reais quanto texto "dd/mm/aaaa hh:mm:ss"
- * (segundos opcionais). Interpreta no fuso horário do script.
+ * Aceita células de data reais, números seriais do Sheets e texto
+ * "dd/mm/aaaa hh:mm:ss" (segundos opcionais, vírgula tolerada, ano com
+ * 2 ou 4 dígitos). Interpreta no fuso horário do script.
  */
 function parseDataHora(valor) {
   if (valor instanceof Date && !isNaN(valor.getTime())) return valor;
-  const m = String(valor).trim()
-    .match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (typeof valor === 'number' && isFinite(valor) && valor > 1) {
+    // Serial do Sheets: dias decorridos desde 30/12/1899.
+    return new Date(new Date(1899, 11, 30).getTime() + Math.round(valor * 86400000));
+  }
+  const s = String(valor).trim().replace(',', ' ').replace(/\s+/g, ' ');
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4}) (\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (!m) return null;
-  return new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0));
+  var ano = +m[3];
+  if (ano < 100) ano += 2000;
+  return new Date(ano, +m[2] - 1, +m[1], +m[4], +m[5], +(m[6] || 0));
+}
+
+/**
+ * Diagnóstico: <URL_DO_APP>?action=debug
+ * Mostra como o servidor enxerga a célula C2 (Data_Hora do 1º jogo).
+ */
+function montarDebug() {
+  const celula = getAba(ABA_JOGOS).getRange(2, 3);
+  const valor = celula.getValue();
+  const exibido = celula.getDisplayValue();
+  const interpretado = parseDataHora(valor) || parseDataHora(exibido);
+  return {
+    ok: true,
+    fusoScript: Session.getScriptTimeZone(),
+    fusoPlanilha: getPlanilha().getSpreadsheetTimeZone(),
+    c2_tipo: Object.prototype.toString.call(valor),
+    c2_valor: String(valor),
+    c2_json: JSON.stringify(valor),
+    c2_exibido: exibido,
+    c2_interpretado: interpretado ? interpretado.toString() : null,
+    horaServidor: new Date().toString()
+  };
 }
 
 function formatarDataHora(data) {

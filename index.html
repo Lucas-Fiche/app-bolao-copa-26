@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0b1f3a" />
   <title>Bolão Copa 2026</title>
-  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="stylesheet" href="css/style.css?v=4" />
 </head>
 <body>
 
-  <!-- ===================== TELA DE LOGIN ===================== -->
+  <!-- ===================== TELA 1: LOGIN ===================== -->
   <section id="tela-login" class="tela">
     <div class="login-card">
       <h1 class="logo">⚽ Bolão<br /><span>Copa 2026</span></h1>
@@ -32,31 +32,40 @@
     </div>
   </section>
 
-  <!-- ===================== TELA DE PALPITES ===================== -->
+  <!-- ===================== TELA 2: BÔNUS (CAMPEÃO / ARTILHEIRO) ===================== -->
+  <section id="tela-bonus" class="tela" hidden>
+    <div class="login-card">
+      <h1 class="logo">🏆 Bônus</h1>
+      <p class="aviso">Quem será o campeão e o artilheiro da Copa?<br />
+        Cada acerto vale <strong>10 pts</strong>. Os palpites travam no 1º jogo do torneio.</p>
+
+      <label for="input-campeao">Campeão</label>
+      <input id="input-campeao" type="text" placeholder="Ex.: Brasil" maxlength="40" />
+
+      <label for="input-artilheiro">Artilheiro</label>
+      <input id="input-artilheiro" type="text" placeholder="Ex.: Vinícius Jr." maxlength="60" />
+
+      <button id="btn-continuar" class="btn-primario">Continuar →</button>
+      <p id="bonus-erro" class="erro" hidden></p>
+    </div>
+  </section>
+
+  <!-- ===================== TELA 3: PALPITES ===================== -->
   <section id="tela-palpites" class="tela" hidden>
     <header class="topo">
       <div>
         <strong id="topo-nome"></strong>
         <small id="topo-status">Palpites carregados</small>
       </div>
-      <button id="btn-sair" class="btn-fantasma">Sair</button>
+      <div class="topo-acoes">
+        <button id="btn-ranking" class="btn-fantasma">🥇 Ranking</button>
+        <button id="btn-sair" class="btn-fantasma">Sair</button>
+      </div>
     </header>
 
     <nav id="abas" class="abas"><!-- abas geradas via JS --></nav>
 
     <main id="conteudo" class="conteudo">
-
-      <!-- Painel de bônus (Campeão / Artilheiro) -->
-      <div id="painel-bonus" class="painel" hidden>
-        <h2>🏆 Bônus <small>(vale 10 pts cada — trava no 1º jogo da Copa)</small></h2>
-        <label for="input-campeao">Campeão</label>
-        <input id="input-campeao" type="text" placeholder="Ex.: Brasil" maxlength="40" />
-        <label for="input-artilheiro">Artilheiro</label>
-        <input id="input-artilheiro" type="text" placeholder="Ex.: Vinícius Jr." maxlength="60" />
-        <p id="bonus-travado" class="aviso" hidden>🔒 O torneio já começou — bônus travados.</p>
-      </div>
-
-      <!-- Painéis de grupos e ranking gerados via JS -->
       <div id="paineis-grupos"></div>
 
       <div id="painel-ranking" class="painel" data-painel="ranking" hidden>
@@ -72,7 +81,7 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="js/config.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/config.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>

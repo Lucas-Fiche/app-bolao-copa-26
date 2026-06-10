@@ -100,7 +100,15 @@ select:focus, input:focus { border-color: var(--verde); }
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
 }
+.btn-fantasma.ativa {
+  color: #06250f;
+  background: var(--amarelo);
+  border-color: var(--amarelo);
+}
+
+.topo-acoes { display: flex; gap: 8px; }
 
 /* ===================== TOPO E ABAS ===================== */
 
@@ -157,11 +165,15 @@ select:focus, input:focus { border-color: var(--verde); }
 }
 .painel h2 small { font-weight: 400; font-size: 0.75rem; color: var(--cinza); }
 
-#painel-bonus {
-  background: rgba(255, 211, 77, 0.08);
-  border: 1px solid rgba(255, 211, 77, 0.25);
-  border-radius: var(--raio);
-  padding: 14px 16px 18px;
+.badge-grupo {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--amarelo);
+  border: 1px solid rgba(255, 211, 77, 0.45);
+  border-radius: 999px;
+  margin-left: 4px;
 }
 
 /* ===================== CARD DE JOGO ===================== */

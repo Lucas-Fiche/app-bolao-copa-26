@@ -1,5 +1,6 @@
 /* ============================================================
  * BOLÃO COPA 2026 — FRONT-END
+ * Fluxo: Login → Bônus (campeão/artilheiro, se ainda abertos) → Palpites
  * ============================================================ */
 
 const MINUTOS_BLOQUEIO = 30;
@@ -20,7 +21,7 @@ const estado = {
   abaAtiva: null
 };
 
-// ===================== HELPERS DE DOM =====================
+// ===================== HELPERS =====================
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -32,8 +33,6 @@ function mostrarToast(msg, tipo) {
   clearTimeout(mostrarToast._t);
   mostrarToast._t = setTimeout(() => { toast.hidden = true; }, 4000);
 }
-
-// ===================== API =====================
 
 async function apiGet(action) {
   const resp = await fetch(API_URL + '?action=' + encodeURIComponent(action));
@@ -52,8 +51,6 @@ async function apiPost(payload) {
   if (!resp.ok) throw new Error('Falha de rede (' + resp.status + ')');
   return resp.json();
 }
-
-// ===================== TEMPO / BLOQUEIO =====================
 
 function agoraServidor() {
   return Date.now() + estado.serverOffset;
@@ -130,8 +127,8 @@ async function fazerLogin(nome, pin, silencioso) {
       };
     });
 
-    // Rascunho local (palpites digitados e não salvos) tem prioridade
-    // sobre o servidor, exceto em jogos já bloqueados.
+    // Rascunho local (digitado e não salvo) tem prioridade sobre o
+    // servidor, exceto em jogos já bloqueados.
     const rascunho = JSON.parse(localStorage.getItem(chaveRascunho(estado.nome)) || 'null');
     if (rascunho) {
       const bloqueadoPorId = {};
@@ -146,7 +143,10 @@ async function fazerLogin(nome, pin, silencioso) {
     }
 
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ nome, pin }));
-    abrirTelaPalpites();
+
+    // Bônus ainda abertos? Passa primeiro pela tela de campeão/artilheiro.
+    if (estado.bonusBloqueado) abrirTelaPalpites();
+    else abrirTelaBonus();
   } catch (err) {
     localStorage.removeItem(CHAVE_SESSAO);
     if (!silencioso) {
@@ -165,40 +165,83 @@ $('#btn-sair').addEventListener('click', () => {
   location.reload();
 });
 
+// ===================== TELA DE BÔNUS =====================
+
+function abrirTelaBonus() {
+  $('#tela-login').hidden = true;
+  $('#tela-palpites').hidden = true;
+  $('#tela-bonus').hidden = false;
+  $('#input-campeao').value = estado.campeao;
+  $('#input-artilheiro').value = estado.artilheiro;
+}
+
+$('#btn-continuar').addEventListener('click', async () => {
+  const btn = $('#btn-continuar');
+  const campeao = $('#input-campeao').value.trim();
+  const artilheiro = $('#input-artilheiro').value.trim();
+  $('#bonus-erro').hidden = true;
+
+  // Nada preenchido e nada salvo antes: segue direto, sem chamar a API.
+  if (!campeao && !artilheiro) {
+    abrirTelaPalpites();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Salvando…';
+  try {
+    const resp = await apiPost({
+      action: 'salvar',
+      nome: estado.nome,
+      pin: estado.pin,
+      campeao,
+      artilheiro,
+      palpites: []
+    });
+    if (!resp.ok) throw new Error(resp.erro || 'Erro ao salvar o bônus.');
+
+    estado.campeao = campeao;
+    estado.artilheiro = artilheiro;
+    salvarRascunho();
+    if (resp.bonusSalvo) mostrarToast('🏆 Bônus salvos!', 'sucesso');
+    abrirTelaPalpites();
+  } catch (err) {
+    const elErro = $('#bonus-erro');
+    elErro.textContent = err.message;
+    elErro.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar →';
+  }
+});
+
 // ===================== TELA DE PALPITES =====================
 
 function abrirTelaPalpites() {
   $('#tela-login').hidden = true;
+  $('#tela-bonus').hidden = true;
   $('#tela-palpites').hidden = false;
   $('#topo-nome').textContent = estado.nome;
-
-  // Bônus
-  $('#painel-bonus').hidden = false;
-  $('#input-campeao').value = estado.campeao;
-  $('#input-artilheiro').value = estado.artilheiro;
-  if (estado.bonusBloqueado) {
-    $('#input-campeao').disabled = true;
-    $('#input-artilheiro').disabled = true;
-    $('#bonus-travado').hidden = false;
-  }
 
   montarAbas();
   montarPaineisDeGrupos();
   montarRanking();
-  ativarAba(estado.grupos[0] || 'ranking');
+  ativarAba('hoje');
 
   // Reavalia bloqueios a cada minuto para "cinzar" jogos que entram na
   // janela de 30 minutos enquanto o usuário navega.
-  setInterval(atualizarBloqueios, 60 * 1000);
+  if (!abrirTelaPalpites._timer) {
+    abrirTelaPalpites._timer = setInterval(atualizarBloqueios, 60 * 1000);
+  }
 }
 
 function montarAbas() {
   const nav = $('#abas');
   nav.innerHTML = '';
+  nav.appendChild(criarAba('📅 Hoje', 'hoje'));
   estado.grupos.forEach(grupo => {
     nav.appendChild(criarAba('Grupo ' + grupo, grupo));
   });
-  nav.appendChild(criarAba('🥇 Ranking', 'ranking'));
 }
 
 function criarAba(rotulo, id) {
@@ -212,19 +255,30 @@ function criarAba(rotulo, id) {
 
 function ativarAba(id) {
   estado.abaAtiva = id;
+  if (id === 'hoje') montarPainelHoje(); // reconstrói com data/bloqueios atuais
   document.querySelectorAll('.aba').forEach(b => {
     b.classList.toggle('ativa', b.dataset.aba === id);
   });
   document.querySelectorAll('[data-painel]').forEach(p => {
     p.hidden = p.dataset.painel !== id;
   });
-  $('#painel-bonus').hidden = id === 'ranking';
+  $('#btn-ranking').classList.toggle('ativa', id === 'ranking');
   $('#conteudo').scrollTop = 0;
 }
+
+$('#btn-ranking').addEventListener('click', () => ativarAba('ranking'));
 
 function montarPaineisDeGrupos() {
   const container = $('#paineis-grupos');
   container.innerHTML = '';
+
+  // Painel "Hoje" (conteúdo montado em montarPainelHoje a cada ativação)
+  const painelHoje = document.createElement('div');
+  painelHoje.className = 'painel';
+  painelHoje.dataset.painel = 'hoje';
+  painelHoje.id = 'painel-hoje';
+  painelHoje.hidden = true;
+  container.appendChild(painelHoje);
 
   estado.grupos.forEach(grupo => {
     const painel = document.createElement('div');
@@ -239,13 +293,58 @@ function montarPaineisDeGrupos() {
     estado.jogos
       .filter(j => j.grupo === grupo)
       .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-      .forEach(jogo => painel.appendChild(criarCardJogo(jogo)));
+      .forEach(jogo => painel.appendChild(criarCardJogo(jogo, false)));
 
     container.appendChild(painel);
   });
 }
 
-function criarCardJogo(jogo) {
+function montarPainelHoje() {
+  const painel = $('#painel-hoje');
+  painel.innerHTML = '';
+
+  const mesmoDia = (ts, ref) => {
+    const a = new Date(ts), b = new Date(ref);
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+  };
+
+  const agora = agoraServidor();
+  let jogosDoDia = estado.jogos.filter(j => j.timestamp && mesmoDia(j.timestamp, agora));
+  let titulo = '📅 Jogos de hoje';
+
+  if (!jogosDoDia.length) {
+    // Sem jogos hoje: mostra o próximo dia com jogos.
+    const futuros = estado.jogos
+      .filter(j => j.timestamp && j.timestamp > agora)
+      .sort((a, b) => a.timestamp - b.timestamp);
+    if (futuros.length) {
+      jogosDoDia = futuros.filter(j => mesmoDia(j.timestamp, futuros[0].timestamp));
+      const d = new Date(futuros[0].timestamp);
+      titulo = '📅 Sem jogos hoje — próximos jogos: ' +
+        String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+  }
+
+  const h2 = document.createElement('h2');
+  h2.textContent = titulo;
+  painel.appendChild(h2);
+
+  if (!jogosDoDia.length) {
+    const p = document.createElement('p');
+    p.className = 'aviso';
+    p.textContent = 'Nenhum jogo encontrado. Navegue pelos grupos acima. 👆';
+    painel.appendChild(p);
+    return;
+  }
+
+  jogosDoDia
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .forEach(jogo => painel.appendChild(criarCardJogo(jogo, true)));
+}
+
+function criarCardJogo(jogo, comGrupo) {
   const card = document.createElement('div');
   card.className = 'jogo';
   card.dataset.idJogo = jogo.id;
@@ -254,7 +353,8 @@ function criarCardJogo(jogo) {
   const encerrado = jogo.golsAReal !== null && jogo.golsBReal !== null;
 
   card.innerHTML = `
-    <div class="jogo-data">📅 ${jogo.dataHoraTexto}${encerrado
+    <div class="jogo-data">📅 ${jogo.dataHoraTexto}${comGrupo
+      ? ` <span class="badge-grupo">Grupo ${jogo.grupo}</span>` : ''}${encerrado
       ? ` <span class="resultado">Resultado: ${jogo.golsAReal} x ${jogo.golsBReal}</span>` : ''}</div>
     <div class="jogo-placar">
       <span class="time time-a">${jogo.timeA}</span>
@@ -276,10 +376,18 @@ function criarCardJogo(jogo) {
   return card;
 }
 
-function aoDigitarPalpite(idJogo, card) {
-  const a = card.querySelector('[data-lado="A"]').value;
-  const b = card.querySelector('[data-lado="B"]').value;
+function aoDigitarPalpite(idJogo, cardOrigem) {
+  const a = cardOrigem.querySelector('[data-lado="A"]').value;
+  const b = cardOrigem.querySelector('[data-lado="B"]').value;
   estado.palpites[idJogo] = { golsA: a, golsB: b };
+
+  // O mesmo jogo pode aparecer em "Hoje" e na aba do grupo: sincroniza.
+  document.querySelectorAll(`[data-id-jogo="${idJogo}"]`).forEach(card => {
+    if (card === cardOrigem) return;
+    card.querySelector('[data-lado="A"]').value = a;
+    card.querySelector('[data-lado="B"]').value = b;
+  });
+
   salvarRascunho();
   $('#topo-status').textContent = 'Alterações não salvas';
 }
@@ -293,8 +401,8 @@ function aplicarBloqueio(card, jogo) {
 
 function atualizarBloqueios() {
   estado.jogos.forEach(jogo => {
-    const card = document.querySelector(`[data-id-jogo="${jogo.id}"]`);
-    if (card) aplicarBloqueio(card, jogo);
+    document.querySelectorAll(`[data-id-jogo="${jogo.id}"]`)
+      .forEach(card => aplicarBloqueio(card, jogo));
   });
 }
 
@@ -320,17 +428,10 @@ function salvarRascunho() {
   if (!estado.nome) return;
   localStorage.setItem(chaveRascunho(estado.nome), JSON.stringify({
     palpites: estado.palpites,
-    campeao: $('#input-campeao').value,
-    artilheiro: $('#input-artilheiro').value
+    campeao: estado.campeao,
+    artilheiro: estado.artilheiro
   }));
 }
-
-['#input-campeao', '#input-artilheiro'].forEach(sel => {
-  $(sel).addEventListener('input', () => {
-    salvarRascunho();
-    $('#topo-status').textContent = 'Alterações não salvas';
-  });
-});
 
 // ===================== SALVAR =====================
 
@@ -355,8 +456,8 @@ $('#btn-salvar').addEventListener('click', async () => {
       action: 'salvar',
       nome: estado.nome,
       pin: estado.pin,
-      campeao: estado.bonusBloqueado ? '' : $('#input-campeao').value.trim(),
-      artilheiro: estado.bonusBloqueado ? '' : $('#input-artilheiro').value.trim(),
+      campeao: estado.bonusBloqueado ? '' : estado.campeao,
+      artilheiro: estado.bonusBloqueado ? '' : estado.artilheiro,
       palpites
     });
 
