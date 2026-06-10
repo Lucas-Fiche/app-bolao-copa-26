@@ -31,6 +31,10 @@ const SPREADSHEET_ID = '';
 const ABA_JOGADORES = 'Jogadores';
 const ABA_JOGOS = 'Jogos';
 const ABA_PALPITES = 'Palpites';
+const ABA_HISTORICO = 'Historico'; // criada automaticamente por salvarHistorico()
+
+// URL pública do app (usada nos e-mails de lembrete).
+const APP_URL = 'https://lucas-fiche.github.io/app-bolao-copa-26/';
 
 const MINUTOS_BLOQUEIO = 30;
 const PONTOS_BONUS = 20;          // acertou campeão ou artilheiro
@@ -155,6 +159,7 @@ function montarInit() {
     jogadores: jogadores.map(function (j) { return j.nome; }),
     ranking: rankings.geral,
     rankingBrasil: rankings.brasil,
+    historico: lerHistorico(),
     jogos: jogos.map(function (j) {
       return {
         id: j.id,
@@ -716,6 +721,106 @@ function indexarJogosPorTimes(aba) {
   return mapa;
 }
 
+// ============== LEMBRETES E HISTÓRICO (acionadores diários) ==============
+
+/**
+ * Envia e-mail para quem ainda não palpitou nos jogos de AMANHÃ.
+ * Requer a coluna F (Email) na aba Jogadores — sem e-mail, é ignorado.
+ * Acionador sugerido: diário, entre 18h e 19h.
+ */
+function enviarLembretes() {
+  const agora = new Date();
+  const iniAmanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
+  const fimAmanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 2);
+
+  const jogosAmanha = lerJogos().filter(function (j) {
+    return j.dataHora && j.dataHora >= iniAmanha && j.dataHora < fimAmanha &&
+           !mataMataAindaFechado(j.grupo, agora);
+  });
+  if (!jogosAmanha.length) {
+    Logger.log('enviarLembretes: sem jogos amanhã.');
+    return;
+  }
+
+  const temPalpite = {};
+  lerPalpites().forEach(function (p) {
+    temPalpite[p.nome + '|' + String(p.idJogo)] = true;
+  });
+
+  var enviados = 0;
+  lerJogadores().forEach(function (j) {
+    if (!temTexto(j.email)) return;
+    const pendentes = jogosAmanha.filter(function (g) {
+      return !temPalpite[j.nome + '|' + String(g.id)];
+    });
+    if (!pendentes.length) return;
+
+    const lista = pendentes.map(function (g) {
+      return '  • ' + formatarDataHora(g.dataHora) + ' — ' + g.timeA + ' x ' + g.timeB;
+    }).join('\n');
+
+    MailApp.sendEmail(j.email,
+      '⚽ Bolão do PRTTS: faltam seus palpites de amanhã!',
+      'Olá, ' + j.nome + '!\n\n' +
+      'Você ainda não palpitou nestes jogos de amanhã:\n\n' + lista + '\n\n' +
+      'Lembre-se: os palpites travam 30 minutos antes de cada jogo, e quem ' +
+      'não palpita fica com 0 ponto na partida. 💤\n\n' +
+      'Palpite agora: ' + APP_URL + '\n\n— Bolão do PRTTS 🥇');
+    enviados++;
+  });
+  Logger.log('enviarLembretes: ' + enviados + ' lembrete(s) enviado(s).');
+}
+
+/**
+ * Grava um retrato diário do ranking geral na aba "Historico"
+ * (Data | Nome | Pontos), usada pelo gráfico de evolução do app.
+ * Rodar de novo no mesmo dia sobrescreve o retrato do dia.
+ * Acionador sugerido: diário, entre 6h e 7h.
+ */
+function salvarHistorico() {
+  const ranking = montarRankings(lerJogadores(), lerJogos()).geral;
+  var aba = getPlanilha().getSheetByName(ABA_HISTORICO);
+  if (!aba) {
+    aba = getPlanilha().insertSheet(ABA_HISTORICO);
+    aba.appendRow(['Data', 'Nome', 'Pontos']);
+  }
+
+  const hoje = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  const valores = aba.getDataRange().getValues();
+  for (var i = valores.length - 1; i >= 1; i--) {
+    if (dataCurta(valores[i][0], true) === hoje) aba.deleteRow(i + 1);
+  }
+  ranking.forEach(function (r) {
+    aba.appendRow([hoje, r.nome, r.pontos]);
+  });
+  Logger.log('salvarHistorico: retrato de ' + hoje + ' gravado (' + ranking.length + ' jogadores).');
+}
+
+/** Histórico para o gráfico do app: [{ data: 'dd/MM', nome, pontos }] */
+function lerHistorico() {
+  const aba = getPlanilha().getSheetByName(ABA_HISTORICO);
+  if (!aba) return [];
+  return aba.getDataRange().getValues().slice(1)
+    .filter(function (l) { return String(l[1] || '').trim() !== ''; })
+    .map(function (l) {
+      return {
+        data: dataCurta(l[0], false),
+        nome: String(l[1]).trim(),
+        pontos: Number(l[2]) || 0
+      };
+    });
+}
+
+/** Normaliza a célula de data do histórico ("dd/MM" ou "dd/MM/yyyy"). */
+function dataCurta(valor, completa) {
+  const fmt = completa ? 'dd/MM/yyyy' : 'dd/MM';
+  if (valor instanceof Date) {
+    return Utilities.formatDate(valor, Session.getScriptTimeZone(), fmt);
+  }
+  const s = String(valor).trim();
+  return completa ? s : s.slice(0, 5);
+}
+
 // ===================== REGRAS DE TEMPO =====================
 
 function jogoBloqueado(jogo, agora) {
@@ -759,7 +864,7 @@ function getAba(nome) {
   return aba;
 }
 
-/** Jogadores: Nome | PIN | Campeão | Artilheiro | Pontuacao_Total */
+/** Jogadores: Nome | PIN | Campeão | Artilheiro | Pontuacao_Total | Email */
 function lerJogadores() {
   return getAba(ABA_JOGADORES).getDataRange().getValues().slice(1)
     .filter(function (l) { return String(l[0]).trim() !== ''; })
@@ -769,7 +874,8 @@ function lerJogadores() {
         pin: String(l[1]).trim(),
         campeao: String(l[2] || ''),
         artilheiro: String(l[3] || ''),
-        pontuacao: l[4]
+        pontuacao: l[4],
+        email: String(l[5] || '').trim()
       };
     });
 }

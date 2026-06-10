@@ -142,6 +142,7 @@ async function init() {
     estado.jogos = dados.jogos;
     estado.ranking = dados.ranking;
     estado.rankingBrasil = dados.rankingBrasil || null; // null = back-end antigo
+    estado.historico = dados.historico || [];
     estado.bonusBloqueado = dados.bonusBloqueado;
     estado.grupos = [...new Set(dados.jogos.map(j => j.grupo))]
       .sort((a, b) => pesoFase(a) - pesoFase(b) || a.localeCompare(b, 'pt'));
@@ -601,6 +602,15 @@ function montarRanking(tipo) {
   $('#painel-ranking').classList.toggle('tema-brasil', ehBrasil);
   $('#ranking-brasil-chamada').hidden = !ehBrasil;
 
+  // Visão "Evolução": gráfico no lugar da lista.
+  const ehEvolucao = tipo === 'evolucao';
+  $('#grafico-evolucao').hidden = !ehEvolucao;
+  $('#lista-ranking').hidden = ehEvolucao;
+  if (ehEvolucao) {
+    desenharEvolucao();
+    return;
+  }
+
   const dados = (ehBrasil && estado.rankingBrasil) || estado.ranking;
   const lista = $('#lista-ranking');
   lista.innerHTML = '';
@@ -631,6 +641,68 @@ function montarRanking(tipo) {
 document.querySelectorAll('.sub-aba').forEach(btn => {
   btn.addEventListener('click', () => montarRanking(btn.dataset.ranking));
 });
+
+// ===================== GRÁFICO DE EVOLUÇÃO =====================
+
+const CORES_GRAFICO = ['#0caf60', '#2f7de1', '#f0a417', '#df4a51', '#8e5bd1',
+                       '#0aa3a3', '#d1589b', '#7a8a1e', '#b3622a', '#4a6fa5',
+                       '#5e548e', '#3d8b5f'];
+
+function desenharEvolucao() {
+  const cont = $('#grafico-evolucao');
+  const hist = estado.historico || [];
+  if (hist.length < 1) {
+    cont.innerHTML = '<p class="aviso">📈 O histórico começa a ser gravado no primeiro dia da Copa.<br />Volte aqui depois da primeira rodada!</p>';
+    return;
+  }
+
+  const datas = [...new Set(hist.map(h => h.data))];
+  const porNome = {};
+  hist.forEach(h => {
+    (porNome[h.nome] = porNome[h.nome] || {})[h.data] = h.pontos;
+  });
+  // Ordena pela pontuação mais recente (legenda na ordem do ranking).
+  const ultima = datas[datas.length - 1];
+  const nomes = Object.keys(porNome)
+    .sort((a, b) => (porNome[b][ultima] || 0) - (porNome[a][ultima] || 0));
+
+  const maxPts = Math.max(1, ...hist.map(h => h.pontos));
+  const W = 620, H = 250, PL = 34, PR = 14, PT = 12, PB = 26;
+  const x = (i) => PL + i * (W - PL - PR) / Math.max(datas.length - 1, 1);
+  const y = (v) => PT + (1 - v / maxPts) * (H - PT - PB);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="grafico">`;
+  // Eixos e linhas-guia
+  [0, 0.5, 1].forEach(f => {
+    const v = Math.round(maxPts * f);
+    svg += `<line x1="${PL}" y1="${y(v)}" x2="${W - PR}" y2="${y(v)}" class="guia" />
+            <text x="${PL - 6}" y="${y(v) + 4}" class="eixo" text-anchor="end">${v}</text>`;
+  });
+  // Rótulos de datas (primeira, meio e última, para não poluir)
+  [0, Math.floor((datas.length - 1) / 2), datas.length - 1]
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .forEach(i => {
+      svg += `<text x="${x(i)}" y="${H - 8}" class="eixo" text-anchor="middle">${datas[i]}</text>`;
+    });
+  // Uma linha por jogador
+  nomes.forEach((nome, n) => {
+    const cor = CORES_GRAFICO[n % CORES_GRAFICO.length];
+    const pontos = datas.map((d, i) =>
+      `${x(i)},${y(porNome[nome][d] !== undefined ? porNome[nome][d] : 0)}`);
+    svg += `<polyline points="${pontos.join(' ')}" fill="none" stroke="${cor}"
+             stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />`;
+    const fim = porNome[nome][ultima] !== undefined ? porNome[nome][ultima] : 0;
+    svg += `<circle cx="${x(datas.length - 1)}" cy="${y(fim)}" r="4" fill="${cor}" />`;
+  });
+  svg += '</svg>';
+
+  // Legenda na ordem do ranking atual
+  const legenda = nomes.map((nome, n) =>
+    `<span class="legenda-item"><i style="background:${CORES_GRAFICO[n % CORES_GRAFICO.length]}"></i>
+      ${nome} <b>${porNome[nome][ultima] !== undefined ? porNome[nome][ultima] : 0}</b></span>`).join('');
+
+  cont.innerHTML = svg + `<div class="legenda">${legenda}</div>`;
+}
 
 // ===================== RASCUNHO (localStorage) =====================
 
@@ -697,5 +769,10 @@ $('#btn-salvar').addEventListener('click', async () => {
     btn.textContent = '💾 Salvar Meus Palpites';
   }
 });
+
+// Service worker mínimo: torna o app instalável (PWA), sem cachear nada.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 
 init();

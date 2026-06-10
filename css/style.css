@@ -418,6 +418,42 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 }
 .ranking .detalhe strong { color: var(--texto); font-weight: 600; }
 
+/* ===== Gráfico de evolução ===== */
+
+#grafico-evolucao .grafico {
+  width: 100%;
+  height: auto;
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 6px;
+}
+#grafico-evolucao .guia { stroke: var(--borda); stroke-width: 1; stroke-dasharray: 4 4; }
+#grafico-evolucao .eixo { font-size: 11px; fill: var(--texto-suave); }
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 12px;
+}
+.legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--texto);
+  font-weight: 600;
+}
+.legenda-item i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.legenda-item b { color: var(--verde-escuro); }
+
 /* ===== Tema 🇧🇷 da visão "Jogos do Brasil" ===== */
 
 .chamada-brasil {

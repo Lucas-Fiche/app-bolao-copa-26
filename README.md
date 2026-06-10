@@ -28,10 +28,12 @@ Crie uma planilha com **3 abas** (nomes exatos):
 
 **Aba `Jogadores`**
 
-| Nome | PIN | Campeão | Artilheiro | Pontuacao_Total |
-|------|-----|---------|------------|-----------------|
-| Lucas | 1234 | | | 0 |
-| Maria | 5678 | | | 0 |
+| Nome | PIN | Campeão | Artilheiro | Pontuacao_Total | Email |
+|------|-----|---------|------------|-----------------|-------|
+| Lucas | 1234 | | | 0 | lucas@exemplo.com |
+| Maria | 5678 | | | 0 | maria@exemplo.com |
+
+> A coluna `Email` é opcional — é usada apenas pelos lembretes automáticos de palpite (`enviarLembretes`).
 
 > 💡 Formate a coluna **PIN como Texto Simples** (Formatar > Número > Texto simples) para não perder zeros à esquerda (ex.: `0042`).
 
@@ -103,10 +105,11 @@ Integração opcional com [The Odds API](https://the-odds-api.com) (plano gratui
 2. Adicione 3 colunas na aba **Jogos**: `Odd_A | Odd_Empate | Odd_B` (colunas H, I e J).
 3. No Apps Script, rode **`listarEsportes()`** e confira no log se o sport key da Copa é `soccer_fifa_world_cup` (ajuste a constante `ODDS_API_SPORT` se for diferente).
 4. Rode **`atualizarOdds()`** uma vez para testar — as odds médias das casas aparecem nas colunas H–J e nos cards do app.
-5. Crie os acionadores (Acionadores > Adicionar acionador, baseado em tempo):
-   - `atualizarPlacares` a cada **4 horas** (2 créditos/chamada) — preenche `Gols_A_Real`/`Gols_B_Real` dos jogos encerrados; **nunca sobrescreve** um resultado já preenchido.
-   - `atualizarOdds` **1x por dia** (1 crédito/chamada).
-   - Essa cadência consome ~390 créditos/mês, dentro do plano gratuito.
+5. Crie os acionadores (Acionadores > Adicionar acionador, baseado em tempo, implantação "Teste/Head"):
+   - `atualizarPlacares` a cada **2 horas** — preenche `Gols_A_Real`/`Gols_B_Real` dos jogos encerrados; **nunca sobrescreve** um resultado já preenchido e só gasta créditos quando há resultado pendente.
+   - `atualizarOdds` **1x por dia** (6h–7h) — também preenche os confrontos do mata-mata automaticamente.
+   - `enviarLembretes` **1x por dia** (18h–19h) — e-mail para quem não palpitou nos jogos do dia seguinte (requer coluna Email).
+   - `salvarHistorico` **1x por dia** (6h–7h) — retrato diário do ranking na aba `Historico`, usado pelo gráfico 📈 Evolução.
 
 Os nomes dos times vêm em inglês da API e são traduzidos pelo mapa `NOMES_API` no `Code.gs`. Se algum jogo não casar (veja o log das execuções), confira se o nome retornado pela API está no mapa.
 
