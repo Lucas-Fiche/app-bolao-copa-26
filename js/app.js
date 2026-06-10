@@ -483,7 +483,12 @@ function montarRanking(tipo) {
   // Back-end antigo não envia o ranking do Brasil: esconde o seletor.
   $('#sub-aba-brasil').hidden = !estado.rankingBrasil;
 
-  const dados = (tipo === 'brasil' && estado.rankingBrasil) || estado.ranking;
+  // Tema verde-amarelo na visão "Jogos do Brasil".
+  const ehBrasil = tipo === 'brasil';
+  $('#painel-ranking').classList.toggle('tema-brasil', ehBrasil);
+  $('#ranking-brasil-chamada').hidden = !ehBrasil;
+
+  const dados = (ehBrasil && estado.rankingBrasil) || estado.ranking;
   const lista = $('#lista-ranking');
   lista.innerHTML = '';
   dados.forEach((r, i) => {
@@ -491,9 +496,26 @@ function montarRanking(tipo) {
     const medalha = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
     const exatos = r.exatos > 0
       ? `<small class="exatos">🎯 ${r.exatos} na mosca</small>` : '';
-    li.innerHTML = `<span class="pos">${medalha}</span>
-                    <span class="nome">${r.nome}${exatos}</span>
-                    <span class="pontos">${r.pontos} pts</span>`;
+    // Detalhe expansível com os palpites de bônus (se o back-end enviar).
+    const temDetalhe = 'campeao' in r;
+    const detalhe = temDetalhe ? `
+      <div class="detalhe">
+        <span>🏆 Campeão: <strong>${r.campeao ? nomeComBandeira(r.campeao) : 'ainda não escolheu'}</strong></span>
+        <span>⚽ Artilheiro: <strong>${r.artilheiro || 'ainda não escolheu'}</strong></span>
+      </div>` : '';
+    li.innerHTML = `
+      <div class="rank-linha">
+        <span class="pos">${medalha}</span>
+        <span class="nome">${r.nome}${exatos}</span>
+        <span class="pontos">${r.pontos} pts</span>
+        ${temDetalhe ? '<span class="seta">▾</span>' : ''}
+      </div>${detalhe}`;
+    if (temDetalhe) {
+      li.classList.add('clicavel');
+      li.querySelector('.rank-linha').addEventListener('click', () => {
+        li.classList.toggle('aberto');
+      });
+    }
     lista.appendChild(li);
   });
   if (!dados.length) {

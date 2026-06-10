@@ -287,16 +287,20 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 
 .ranking { list-style: none; }
 .ranking li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   background: var(--card);
   border: 1px solid var(--borda);
   border-radius: 12px;
-  padding: 13px 16px;
   margin-bottom: 8px;
   box-shadow: var(--sombra);
+  overflow: hidden;
 }
+.rank-linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+}
+.ranking li.clicavel .rank-linha { cursor: pointer; }
 .ranking .pos { min-width: 36px; font-weight: 700; }
 .ranking .nome { flex: 1; font-weight: 600; }
 .ranking .exatos {
@@ -306,6 +310,53 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   color: var(--texto-suave);
 }
 .ranking .pontos { color: var(--verde-escuro); font-weight: 700; }
+.ranking .seta {
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+}
+.ranking li.aberto .seta { transform: rotate(180deg); }
+
+/* Detalhe expansível: palpites de campeão e artilheiro do jogador */
+.ranking .detalhe {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 16px 14px;
+  border-top: 1px dashed var(--borda);
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.ranking li.aberto .detalhe { display: flex; }
+.ranking .detalhe strong { color: var(--texto); }
+
+/* ===== Tema 🇧🇷 da visão "Jogos do Brasil" ===== */
+
+.chamada-brasil {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0a7a3c;
+  background: linear-gradient(120deg, rgba(0, 151, 57, 0.1), rgba(255, 215, 0, 0.2));
+  border: 1px solid rgba(0, 151, 57, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.sub-aba.ativa[data-ranking="brasil"] {
+  background: linear-gradient(120deg, #009739, #0caf60);
+  border-color: #009739;
+}
+
+#painel-ranking.tema-brasil .ranking li {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(120deg, #009739, #ffd700, #009739) border-box;
+  box-shadow: 0 2px 14px rgba(0, 151, 57, 0.15);
+}
+#painel-ranking.tema-brasil .ranking .pontos { color: #0a7a3c; }
+#painel-ranking.tema-brasil .ranking .detalhe { border-top-color: rgba(0, 151, 57, 0.3); }
 
 /* ===================== RODAPÉ FIXO ===================== */
 

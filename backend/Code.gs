@@ -233,13 +233,17 @@ function montarRankings(jogadores, jogos) {
 
   const geral = [], brasil = [];
   jogadores.forEach(function (j) {
+    // Campeão e artilheiro entram no ranking para o detalhe expansível
+    // de cada jogador no app (os palpites de bônus são definitivos).
     const g = somarPontos(j.nome, finalizados);
     if (temTexto(CAMPEAO_REAL) && mesmoTexto(j.campeao, CAMPEAO_REAL)) g.pontos += PONTOS_CAMPEAO;
     if (temTexto(ARTILHEIRO_REAL) && mesmoTexto(j.artilheiro, ARTILHEIRO_REAL)) g.pontos += PONTOS_ARTILHEIRO;
-    geral.push({ nome: j.nome, pontos: g.pontos, exatos: g.exatos });
+    geral.push({ nome: j.nome, pontos: g.pontos, exatos: g.exatos,
+                 campeao: j.campeao, artilheiro: j.artilheiro });
 
     const b = somarPontos(j.nome, doBrasil);
-    brasil.push({ nome: j.nome, pontos: b.pontos, exatos: b.exatos });
+    brasil.push({ nome: j.nome, pontos: b.pontos, exatos: b.exatos,
+                  campeao: j.campeao, artilheiro: j.artilheiro });
   });
 
   const ordenar = function (a, b) {
