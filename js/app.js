@@ -469,16 +469,15 @@ function criarCardJogo(jogo, comGrupo) {
     jogo.palpites.forEach(p => {
       const li = document.createElement('li');
       const esqueceu = p.esqueceu || p.golsA === null;
-      const errado = p.pontos === 0; // palpite incorreto (ou esquecido) já com resultado
       const selo = p.pontos === null ? ''
         : p.pontos === 3 ? '<span class="pts pts-3">🎯 +3</span>'
         : p.pontos === 1 ? '<span class="pts pts-1">+1</span>'
+        : esqueceu ? '<span class="pts pts-zzz">0</span>'
         : '<span class="pts pts-0">0</span>';
       const eu = p.nome === estado.nome ? ' <small>(você)</small>' : '';
       const placar = esqueceu
-        ? '<span class="p-placar p-errado">💤 esqueceu</span>'
-        : `<span class="p-placar${errado ? ' p-errado' : ''}">${p.golsA} x ${p.golsB}</span>`;
-      if (errado) li.classList.add('palpite-errado');
+        ? '<span class="p-placar p-esqueceu">💤 esqueceu</span>'
+        : `<span class="p-placar">${p.golsA} x ${p.golsB}</span>`;
       li.innerHTML = `<span class="p-nome">${p.nome}${eu}</span>${placar}${selo}`;
       ul.appendChild(li);
     });

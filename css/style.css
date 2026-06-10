@@ -306,16 +306,10 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 }
 .pts-3 { color: #0a7a3c; background: var(--verde-claro); }
 .pts-1 { color: #8a6d00; background: var(--amarelo-claro); }
-.pts-0 { color: #fff; background: var(--vermelho); }
+.pts-0 { color: var(--vermelho); background: #fcebec; }     /* errou: círculo vermelho */
+.pts-zzz { color: #4a7dbd; background: #e8f1fb; }           /* esqueceu: azul do 💤 */
 
-/* Palpite incorreto (0 pt) ou esquecido: efeito vermelho na linha */
-.lista-palpites .p-errado { color: var(--vermelho); }
-.lista-palpites li.palpite-errado {
-  background: linear-gradient(90deg, rgba(223, 74, 81, 0.07), transparent 60%);
-  border-left: 3px solid var(--vermelho);
-  padding-left: 7px;
-  border-radius: 4px;
-}
+.lista-palpites .p-esqueceu { color: var(--texto-suave); font-weight: 600; }
 
 /* ===================== RANKING ===================== */
 
