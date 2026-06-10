@@ -119,8 +119,14 @@ function agoraServidor() {
   return Date.now() + estado.serverOffset;
 }
 
+function mataMataAindaFechado(jogo) {
+  return !ehGrupoLetra(jogo.grupo) && estado.aberturaMataMata &&
+         agoraServidor() < estado.aberturaMataMata;
+}
+
 function jogoBloqueado(jogo) {
   if (!jogo.timestamp) return true;
+  if (mataMataAindaFechado(jogo)) return true;
   return jogo.timestamp - agoraServidor() < MINUTOS_BLOQUEIO * 60 * 1000;
 }
 
@@ -132,6 +138,7 @@ async function init() {
     if (!dados.ok) throw new Error(dados.erro || 'Erro ao carregar dados.');
 
     estado.serverOffset = dados.serverTime - Date.now();
+    estado.aberturaMataMata = dados.aberturaMataMata || null;
     estado.jogos = dados.jogos;
     estado.ranking = dados.ranking;
     estado.rankingBrasil = dados.rankingBrasil || null; // null = back-end antigo
@@ -564,7 +571,14 @@ function aplicarBloqueio(card, jogo) {
   const bloqueado = jogoBloqueado(jogo);
   card.classList.toggle('bloqueado', bloqueado);
   card.querySelectorAll('.gols').forEach(i => { i.disabled = bloqueado; });
-  card.querySelector('.jogo-trava').hidden = !bloqueado;
+  const trava = card.querySelector('.jogo-trava');
+  trava.hidden = !bloqueado;
+  if (bloqueado && mataMataAindaFechado(jogo)) {
+    const d = new Date(estado.aberturaMataMata);
+    trava.textContent = `🔒 Palpites do mata-mata abrem em ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  } else {
+    trava.textContent = '🔒 Palpites encerrados';
+  }
 }
 
 function atualizarBloqueios() {

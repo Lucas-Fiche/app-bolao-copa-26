@@ -36,6 +36,10 @@ const MINUTOS_BLOQUEIO = 30;
 const PONTOS_CAMPEAO = 15;
 const PONTOS_ARTILHEIRO = 15;
 
+// Palpites do mata-mata ficam bloqueados até esta data (fim da fase de
+// grupos). Formato dd/mm/aaaa hh:mm:ss, no fuso horário do script.
+const ABERTURA_MATA_MATA = '27/06/2026 00:00:00';
+
 /**
  * Pontuação por fase, definida pelo valor da coluna "Grupo" da aba Jogos.
  * Letras (A–L) = fase de grupos. Para o mata-mata, cadastre os jogos com
@@ -146,6 +150,7 @@ function montarInit() {
   return {
     ok: true,
     serverTime: agora.getTime(),
+    aberturaMataMata: aberturaMataMata().getTime(),
     bonusBloqueado: bonusBloqueado(jogos, agora),
     jogadores: jogadores.map(function (j) { return j.nome; }),
     ranking: rankings.geral,
@@ -163,7 +168,7 @@ function montarInit() {
         odds: (Number(j.oddA) > 0 && Number(j.oddX) > 0 && Number(j.oddB) > 0)
           ? { a: Number(j.oddA), x: Number(j.oddX), b: Number(j.oddB) }
           : null,
-        bloqueado: jogoBloqueado(j.dataHora, agora),
+        bloqueado: jogoBloqueado(j, agora),
         palpites: palpitesPorJogo[j.id] || null
       };
     })
@@ -262,9 +267,15 @@ function salvarPalpites(payload) {
         rejeitados.push({ idJogo: p.idJogo, motivo: 'Jogo não encontrado.' });
         return;
       }
+      // Mata-mata só abre para palpites no fim da fase de grupos.
+      if (mataMataAindaFechado(jogo.grupo, agora)) {
+        rejeitados.push({ idJogo: p.idJogo,
+          motivo: 'Palpites do mata-mata abrem em ' + formatarDataHora(aberturaMataMata()) + '.' });
+        return;
+      }
       // Regra dos 30 minutos: jogo prestes a começar, em andamento ou
       // encerrado não aceita alteração — o palpite anterior é mantido.
-      if (jogoBloqueado(jogo.dataHora, agora)) {
+      if (jogoBloqueado(jogo, agora)) {
         rejeitados.push({ idJogo: p.idJogo, motivo: 'Palpites encerrados para este jogo.' });
         return;
       }
@@ -685,9 +696,22 @@ function indexarJogosPorTimes(aba) {
 
 // ===================== REGRAS DE TEMPO =====================
 
-function jogoBloqueado(dataHora, agora) {
-  if (!dataHora) return true; // sem data válida, melhor não aceitar palpite
-  return (dataHora.getTime() - agora.getTime()) < MINUTOS_BLOQUEIO * 60 * 1000;
+function jogoBloqueado(jogo, agora) {
+  if (!jogo.dataHora) return true; // sem data válida, melhor não aceitar palpite
+  if (mataMataAindaFechado(jogo.grupo, agora)) return true;
+  return (jogo.dataHora.getTime() - agora.getTime()) < MINUTOS_BLOQUEIO * 60 * 1000;
+}
+
+function ehFaseMataMata(grupo) {
+  return normalizarNome(grupo).length > 1; // letras A–L = fase de grupos
+}
+
+function aberturaMataMata() {
+  return parseDataHora(ABERTURA_MATA_MATA) || new Date(0);
+}
+
+function mataMataAindaFechado(grupo, agora) {
+  return ehFaseMataMata(grupo) && agora.getTime() < aberturaMataMata().getTime();
 }
 
 function bonusBloqueado(jogos, agora) {
