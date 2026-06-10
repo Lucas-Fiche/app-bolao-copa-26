@@ -16,6 +16,10 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Garante que o atributo hidden vença qualquer display definido aqui
+   (ex.: .tela usa display:flex, que sobreporia o hidden sem isto). */
+[hidden] { display: none !important; }
+
 html, body { height: 100%; }
 
 body {
