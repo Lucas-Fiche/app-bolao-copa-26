@@ -40,9 +40,16 @@ const MINUTOS_BLOQUEIO = 30;
 const PONTOS_BONUS = 20;          // acertou campeão ou artilheiro
 const PONTOS_BONUS_SOZINHO = 30;  // foi o ÚNICO a acertar aquela categoria
 
-// Palpites do mata-mata ficam bloqueados até esta data (fim da fase de
-// grupos). Formato dd/mm/aaaa hh:mm:ss, no fuso horário do script.
-const ABERTURA_MATA_MATA = '27/06/2026 00:00:00';
+// Cada fase do mata-mata abre para palpites na data abaixo (00:00, fuso
+// do script). Antes disso, os jogos da fase ficam travados.
+const ABERTURA_FASES = {
+  avos16:    '27/06/2026 00:00:00',
+  oitavas:   '04/07/2026 00:00:00',
+  quartas:   '08/07/2026 00:00:00',
+  semifinal: '12/07/2026 00:00:00',
+  terceiro:  '16/07/2026 00:00:00',
+  final:     '16/07/2026 00:00:00'
+};
 
 /**
  * Pontuação por fase, definida pelo valor da coluna "Grupo" da aba Jogos.
@@ -169,7 +176,14 @@ function montarInit() {
   return {
     ok: true,
     serverTime: agora.getTime(),
-    aberturaMataMata: aberturaMataMata().getTime(),
+    aberturasFases: (function () {
+      const out = {};
+      Object.keys(ABERTURA_FASES).forEach(function (k) {
+        const d = parseDataHora(ABERTURA_FASES[k]);
+        if (d) out[k] = d.getTime();
+      });
+      return out;
+    })(),
     bonusBloqueado: bonusBloqueado(jogos, agora),
     jogadores: jogadores.map(function (j) { return j.nome; }),
     ranking: rankings.geral,
@@ -287,10 +301,10 @@ function salvarPalpites(payload) {
         rejeitados.push({ idJogo: p.idJogo, motivo: 'Jogo não encontrado.' });
         return;
       }
-      // Mata-mata só abre para palpites no fim da fase de grupos.
+      // Cada fase do mata-mata só abre para palpites na sua data.
       if (mataMataAindaFechado(jogo.grupo, agora)) {
         rejeitados.push({ idJogo: p.idJogo,
-          motivo: 'Palpites do mata-mata abrem em ' + formatarDataHora(aberturaMataMata()) + '.' });
+          motivo: 'Palpites desta fase abrem em ' + formatarDataHora(aberturaDaFase(jogo.grupo)) + '.' });
         return;
       }
       // Regra dos 30 minutos: jogo prestes a começar, em andamento ou
@@ -844,16 +858,27 @@ function jogoBloqueado(jogo, agora) {
   return (jogo.dataHora.getTime() - agora.getTime()) < MINUTOS_BLOQUEIO * 60 * 1000;
 }
 
-function ehFaseMataMata(grupo) {
-  return normalizarNome(grupo).length > 1; // letras A–L = fase de grupos
+/** Identificador da fase de mata-mata, ou null para grupos (A–L). */
+function chaveDaFase(grupo) {
+  const g = normalizarNome(grupo);
+  if (g.length <= 1) return null;
+  if (g.indexOf('16') !== -1) return 'avos16';
+  if (g.indexOf('oitava') !== -1) return 'oitavas';
+  if (g.indexOf('quarta') !== -1) return 'quartas';
+  if (g.indexOf('semi') !== -1) return 'semifinal';
+  if (g.indexOf('3') !== -1 || g.indexOf('terceiro') !== -1) return 'terceiro';
+  if (g.indexOf('final') !== -1) return 'final';
+  return null;
 }
 
-function aberturaMataMata() {
-  return parseDataHora(ABERTURA_MATA_MATA) || new Date(0);
+function aberturaDaFase(grupo) {
+  const chave = chaveDaFase(grupo);
+  return chave ? parseDataHora(ABERTURA_FASES[chave]) : null;
 }
 
 function mataMataAindaFechado(grupo, agora) {
-  return ehFaseMataMata(grupo) && agora.getTime() < aberturaMataMata().getTime();
+  const abertura = aberturaDaFase(grupo);
+  return !!abertura && agora.getTime() < abertura.getTime();
 }
 
 function bonusBloqueado(jogos, agora) {

@@ -119,9 +119,29 @@ function agoraServidor() {
   return Date.now() + estado.serverOffset;
 }
 
+// Identificador da fase de mata-mata, ou null para grupos (A–L).
+function chaveDaFase(g) {
+  const n = normaliza(g);
+  if (n.length <= 1) return null;
+  if (n.includes('16')) return 'avos16';
+  if (n.includes('oitava')) return 'oitavas';
+  if (n.includes('quarta')) return 'quartas';
+  if (n.includes('semi')) return 'semifinal';
+  if (n.includes('3') || n.includes('terceiro')) return 'terceiro';
+  if (n.includes('final')) return 'final';
+  return null;
+}
+
+function aberturaDaFase(jogo) {
+  const chave = chaveDaFase(jogo.grupo);
+  if (!chave) return null;
+  return (estado.aberturasFases && estado.aberturasFases[chave]) ||
+         estado.aberturaMataMata || null; // fallback: back-end antigo
+}
+
 function mataMataAindaFechado(jogo) {
-  return !ehGrupoLetra(jogo.grupo) && estado.aberturaMataMata &&
-         agoraServidor() < estado.aberturaMataMata;
+  const abertura = aberturaDaFase(jogo);
+  return !!abertura && agoraServidor() < abertura;
 }
 
 function jogoBloqueado(jogo) {
@@ -138,7 +158,8 @@ async function init() {
     if (!dados.ok) throw new Error(dados.erro || 'Erro ao carregar dados.');
 
     estado.serverOffset = dados.serverTime - Date.now();
-    estado.aberturaMataMata = dados.aberturaMataMata || null;
+    estado.aberturaMataMata = dados.aberturaMataMata || null; // back-end antigo
+    estado.aberturasFases = dados.aberturasFases || null;
     estado.jogos = dados.jogos;
     estado.ranking = dados.ranking;
     estado.rankingBrasil = dados.rankingBrasil || null; // null = back-end antigo
@@ -581,8 +602,8 @@ function aplicarBloqueio(card, jogo) {
   const trava = card.querySelector('.jogo-trava');
   trava.hidden = !bloqueado;
   if (bloqueado && mataMataAindaFechado(jogo)) {
-    const d = new Date(estado.aberturaMataMata);
-    trava.textContent = `🔒 Palpites do mata-mata abrem em ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const d = new Date(aberturaDaFase(jogo));
+    trava.textContent = `🔒 Palpites desta fase abrem em ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
   } else {
     trava.textContent = '🔒 Palpites encerrados';
   }
