@@ -59,15 +59,21 @@ const NOMES_API = {
   'Germany': 'Alemanha', 'Argentina': 'Argentina', 'Algeria': 'Argélia',
   'Saudi Arabia': 'Arábia Saudita', 'Australia': 'Austrália', 'Brazil': 'Brasil',
   'Belgium': 'Bélgica', 'Bosnia and Herzegovina': 'Bósnia e Herz.',
+  'Bosnia & Herzegovina': 'Bósnia e Herz.', 'Bosnia-Herzegovina': 'Bósnia e Herz.',
+  'Bosnia Herzegovina': 'Bósnia e Herz.', 'Bosnia': 'Bósnia e Herz.',
+  'Bosnia and Herz.': 'Bósnia e Herz.',
   'Cape Verde': 'Cabo Verde', 'Canada': 'Canadá', 'Qatar': 'Catar',
   'Colombia': 'Colômbia', 'South Korea': 'Coreia do Sul',
+  'Korea Republic': 'Coreia do Sul',
   'Ivory Coast': 'Costa do Marfim', "Cote d'Ivoire": 'Costa do Marfim',
   'Croatia': 'Croácia', 'Curacao': 'Curaçao', 'Curaçao': 'Curaçao',
   'Egypt': 'Egito', 'Ecuador': 'Equador', 'Scotland': 'Escócia',
   'Spain': 'Espanha', 'United States': 'Estados Unidos', 'USA': 'Estados Unidos',
+  'United States of America': 'Estados Unidos',
   'France': 'França', 'Ghana': 'Gana', 'Haiti': 'Haiti',
   'Netherlands': 'Holanda', 'England': 'Inglaterra', 'Iraq': 'Iraque',
-  'Iran': 'Irã', 'Japan': 'Japão', 'Jordan': 'Jordânia', 'Morocco': 'Marrocos',
+  'Iran': 'Irã', 'IR Iran': 'Irã',
+  'Japan': 'Japão', 'Jordan': 'Jordânia', 'Morocco': 'Marrocos',
   'Mexico': 'México', 'Norway': 'Noruega', 'New Zealand': 'Nova Zelândia',
   'Panama': 'Panamá', 'Paraguay': 'Paraguai', 'Portugal': 'Portugal',
   'DR Congo': 'RD Congo', 'Congo DR': 'RD Congo',
@@ -441,7 +447,11 @@ function atualizarOdds() {
     if (alvo) {
       aba.getRange(alvo, 8, 1, 3).setValues([[odd(soma.fora), odd(soma.empate), odd(soma.casa)]]);
       gravados++;
+      return;
     }
+    // Nome fora do mapa NOMES_API: registre para ajustar o mapa.
+    Logger.log('atualizarOdds: sem correspondência para "' + ev.home_team +
+      ' x ' + ev.away_team + '" (traduzido: ' + casa + ' x ' + fora + ')');
   });
   Logger.log('atualizarOdds: odds gravadas em ' + gravados + ' jogo(s).');
 }
@@ -487,7 +497,11 @@ function atualizarPlacares() {
       linha = linhaDe[chaveTimes(fora, casa)];
       golsA = golsFora; golsB = golsCasa;
     }
-    if (!linha) return;
+    if (!linha) {
+      Logger.log('atualizarPlacares: sem correspondência para "' + ev.home_team +
+        ' x ' + ev.away_team + '" (traduzido: ' + casa + ' x ' + fora + ')');
+      return;
+    }
     // Não sobrescreve resultado já lançado (manual ou de execução anterior).
     if (valores[linha - 1][5] !== '' && valores[linha - 1][6] !== '') return;
     aba.getRange(linha, 6, 1, 2).setValues([[golsA, golsB]]);
