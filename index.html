@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1f3a" />
+  <title>Bolão Copa 2026</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===================== TELA DE LOGIN ===================== -->
+  <section id="tela-login" class="tela">
+    <div class="login-card">
+      <h1 class="logo">⚽ Bolão<br /><span>Copa 2026</span></h1>
+
+      <div id="login-carregando" class="aviso">Carregando jogadores…</div>
+
+      <form id="form-login" hidden>
+        <label for="select-nome">Quem é você?</label>
+        <select id="select-nome" required>
+          <option value="" disabled selected>Selecione seu nome</option>
+        </select>
+
+        <label for="input-pin">PIN (4 dígitos)</label>
+        <input id="input-pin" type="password" inputmode="numeric" pattern="\d{4}"
+               maxlength="4" placeholder="••••" autocomplete="off" required />
+
+        <button type="submit" id="btn-entrar" class="btn-primario">Entrar</button>
+        <p id="login-erro" class="erro" hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== TELA DE PALPITES ===================== -->
+  <section id="tela-palpites" class="tela" hidden>
+    <header class="topo">
+      <div>
+        <strong id="topo-nome"></strong>
+        <small id="topo-status">Palpites carregados</small>
+      </div>
+      <button id="btn-sair" class="btn-fantasma">Sair</button>
+    </header>
+
+    <nav id="abas" class="abas"><!-- abas geradas via JS --></nav>
+
+    <main id="conteudo" class="conteudo">
+
+      <!-- Painel de bônus (Campeão / Artilheiro) -->
+      <div id="painel-bonus" class="painel" hidden>
+        <h2>🏆 Bônus <small>(vale 10 pts cada — trava no 1º jogo da Copa)</small></h2>
+        <label for="input-campeao">Campeão</label>
+        <input id="input-campeao" type="text" placeholder="Ex.: Brasil" maxlength="40" />
+        <label for="input-artilheiro">Artilheiro</label>
+        <input id="input-artilheiro" type="text" placeholder="Ex.: Vinícius Jr." maxlength="60" />
+        <p id="bonus-travado" class="aviso" hidden>🔒 O torneio já começou — bônus travados.</p>
+      </div>
+
+      <!-- Painéis de grupos e ranking gerados via JS -->
+      <div id="paineis-grupos"></div>
+
+      <div id="painel-ranking" class="painel" data-painel="ranking" hidden>
+        <h2>🥇 Ranking</h2>
+        <ol id="lista-ranking" class="ranking"></ol>
+      </div>
+    </main>
+
+    <footer class="rodape">
+      <button id="btn-salvar" class="btn-primario">💾 Salvar Meus Palpites</button>
+    </footer>
+  </section>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
