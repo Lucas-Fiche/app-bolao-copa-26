@@ -39,12 +39,11 @@ const BANDEIRAS = {
   'Uruguai': '🇺🇾', 'Uzbequistão': '🇺🇿', 'África do Sul': '🇿🇦', 'Áustria': '🇦🇹'
 };
 
-// Bandeira junto ao placar: "México 🇲🇽  [2] x [0]  🇿🇦 África do Sul".
+// Bandeira sempre antes do nome: "🇲🇽 México  [2] x [0]  🇿🇦 África do Sul".
 // Times sem bandeira mapeada (ex.: "1º do Grupo A" no mata-mata) ficam sem emoji.
-function nomeComBandeira(time, bandeiraDepois) {
+function nomeComBandeira(time) {
   const f = BANDEIRAS[String(time).trim()];
-  if (!f) return time;
-  return bandeiraDepois ? time + ' ' + f : f + ' ' + time;
+  return f ? f + ' ' + time : time;
 }
 
 // ===================== HELPERS =====================
@@ -383,13 +382,13 @@ function criarCardJogo(jogo, comGrupo) {
       ? ` <span class="badge-grupo">Grupo ${jogo.grupo}</span>` : ''}${encerrado
       ? ` <span class="resultado">Resultado: ${jogo.golsAReal} x ${jogo.golsBReal}</span>` : ''}</div>
     <div class="jogo-placar">
-      <span class="time time-a">${nomeComBandeira(jogo.timeA, true)}</span>
+      <span class="time time-a">${nomeComBandeira(jogo.timeA)}</span>
       <input type="number" min="0" max="99" inputmode="numeric" class="gols"
              data-lado="A" value="${palpite.golsA ?? ''}" placeholder="-" />
       <span class="x">x</span>
       <input type="number" min="0" max="99" inputmode="numeric" class="gols"
              data-lado="B" value="${palpite.golsB ?? ''}" placeholder="-" />
-      <span class="time time-b">${nomeComBandeira(jogo.timeB, false)}</span>
+      <span class="time time-b">${nomeComBandeira(jogo.timeB)}</span>
     </div>
     <div class="jogo-trava" hidden>🔒 Palpites encerrados</div>
   `;
