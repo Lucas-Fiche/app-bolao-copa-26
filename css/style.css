@@ -253,8 +253,11 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   box-shadow: 0 2px 14px rgba(0, 151, 57, 0.18);
 }
 
-/* Jogo bloqueado: desabilitado e acinzentado */
-.jogo.bloqueado { opacity: 0.55; filter: grayscale(0.9); background: #f3f5f8; }
+/* Jogo bloqueado: placar desabilitado e acinzentado (a lista de
+   palpites revelados continua legível). */
+.jogo.bloqueado { background: #f3f5f8; }
+.jogo.bloqueado .jogo-data,
+.jogo.bloqueado .jogo-placar { opacity: 0.55; filter: grayscale(0.9); }
 .jogo.bloqueado input.gols { cursor: not-allowed; }
 .jogo-trava {
   margin-top: 8px;
@@ -263,6 +266,47 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   text-align: center;
   font-weight: 600;
 }
+
+/* ===== Palpites revelados (jogos já iniciados) ===== */
+
+.ver-palpites {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.lista-palpites { list-style: none; margin-top: 6px; }
+.lista-palpites li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed var(--borda);
+}
+.lista-palpites li:last-child { border-bottom: none; }
+.lista-palpites .p-nome { flex: 1; font-weight: 600; }
+.lista-palpites .p-nome small { color: var(--texto-suave); font-weight: 500; }
+.lista-palpites .p-placar { font-weight: 700; }
+
+.pts {
+  min-width: 44px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.pts-3 { color: #0a7a3c; background: var(--verde-claro); }
+.pts-1 { color: #8a6d00; background: var(--amarelo-claro); }
+.pts-0 { color: var(--texto-suave); background: var(--fundo); }
 
 /* ===================== RANKING ===================== */
 

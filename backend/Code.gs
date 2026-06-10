@@ -85,6 +85,7 @@ function montarInit() {
   const jogos = lerJogos();
   const agora = new Date();
   const rankings = montarRankings(jogadores, jogos);
+  const palpitesPorJogo = montarPalpitesRevelados(jogadores, jogos, agora);
   return {
     ok: true,
     serverTime: agora.getTime(),
@@ -102,10 +103,49 @@ function montarInit() {
         timeB: j.timeB,
         golsAReal: j.golsA === '' ? null : Number(j.golsA),
         golsBReal: j.golsB === '' ? null : Number(j.golsB),
-        bloqueado: jogoBloqueado(j.dataHora, agora)
+        bloqueado: jogoBloqueado(j.dataHora, agora),
+        palpites: palpitesPorJogo[j.id] || null
       };
     })
   };
+}
+
+/**
+ * Palpites revelados: somente de jogos que JÁ COMEÇARAM (e que portanto
+ * estão travados há pelo menos 30 minutos — impossível copiar). Jogos
+ * futuros nunca têm os palpites enviados ao app. Quem não palpitou entra
+ * como 0x0 (Regra do Esquecimento); com resultado lançado, cada palpite
+ * recebe os pontos ganhos.
+ */
+function montarPalpitesRevelados(jogadores, jogos, agora) {
+  const porJogo = {};
+  const iniciados = jogos.filter(function (j) {
+    return j.dataHora && j.dataHora.getTime() <= agora.getTime();
+  });
+  if (!iniciados.length) return porJogo;
+
+  const palpitesDe = {};
+  lerPalpites().forEach(function (p) {
+    palpitesDe[p.nome + '|' + String(p.idJogo)] = p;
+  });
+
+  iniciados.forEach(function (jogo) {
+    const temResultado = jogo.golsA !== '' && jogo.golsB !== '';
+    porJogo[jogo.id] = jogadores.map(function (j) {
+      const p = palpitesDe[j.nome + '|' + String(jogo.id)] || { golsA: 0, golsB: 0 };
+      return {
+        nome: j.nome,
+        golsA: Number(p.golsA),
+        golsB: Number(p.golsB),
+        pontos: temResultado
+          ? pontosDoPalpite(Number(p.golsA), Number(p.golsB), Number(jogo.golsA), Number(jogo.golsB))
+          : null
+      };
+    }).sort(function (a, b) {
+      return (b.pontos || 0) - (a.pontos || 0) || a.nome.localeCompare(b.nome);
+    });
+  });
+  return porJogo;
 }
 
 function fazerLogin(payload) {

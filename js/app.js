@@ -441,6 +441,38 @@ function criarCardJogo(jogo, comGrupo) {
     input.addEventListener('input', () => aoDigitarPalpite(jogo.id, card));
   });
 
+  // Palpites revelados (o servidor só os envia para jogos já iniciados).
+  if (jogo.palpites && jogo.palpites.length) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ver-palpites';
+    const rotulo = (aberto) =>
+      `👀 Palpites da galera (${jogo.palpites.length}) ${aberto ? '▴' : '▾'}`;
+    btn.textContent = rotulo(false);
+
+    const ul = document.createElement('ul');
+    ul.className = 'lista-palpites';
+    ul.hidden = true;
+    jogo.palpites.forEach(p => {
+      const li = document.createElement('li');
+      const selo = p.pontos === null ? ''
+        : p.pontos === 3 ? '<span class="pts pts-3">🎯 +3</span>'
+        : p.pontos === 1 ? '<span class="pts pts-1">+1</span>'
+        : '<span class="pts pts-0">0</span>';
+      const eu = p.nome === estado.nome ? ' <small>(você)</small>' : '';
+      li.innerHTML = `<span class="p-nome">${p.nome}${eu}</span>
+                      <span class="p-placar">${p.golsA} x ${p.golsB}</span>${selo}`;
+      ul.appendChild(li);
+    });
+
+    btn.addEventListener('click', () => {
+      ul.hidden = !ul.hidden;
+      btn.textContent = rotulo(!ul.hidden);
+    });
+    card.appendChild(btn);
+    card.appendChild(ul);
+  }
+
   aplicarBloqueio(card, jogo);
   return card;
 }
