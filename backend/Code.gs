@@ -178,11 +178,15 @@ function salvarPalpites(payload) {
       salvos.push(jogo.id);
     });
 
-    // Bônus (Campeão/Artilheiro): só até o pontapé inicial do 1º jogo do torneio.
+    // Bônus (Campeão/Artilheiro): cada campo só pode ser gravado UMA vez
+    // (palpite definitivo) e, no máximo, até o 1º jogo do torneio.
     var bonusSalvo = false;
-    const temBonus = temTexto(payload.campeao) || temTexto(payload.artilheiro);
-    if (temBonus && !bonusBloqueado(jogos, agora)) {
-      gravarBonus(jogador.nome, payload.campeao, payload.artilheiro);
+    const novoCampeao = temTexto(payload.campeao) && !temTexto(jogador.campeao)
+      ? payload.campeao : '';
+    const novoArtilheiro = temTexto(payload.artilheiro) && !temTexto(jogador.artilheiro)
+      ? payload.artilheiro : '';
+    if ((novoCampeao || novoArtilheiro) && !bonusBloqueado(jogos, agora)) {
+      gravarBonus(jogador.nome, novoCampeao, novoArtilheiro);
       bonusSalvo = true;
     }
 

@@ -161,16 +161,14 @@ async function fazerLogin(nome, pin, silencioso) {
       Object.keys(rascunho.palpites || {}).forEach(id => {
         if (!bloqueadoPorId[id]) estado.palpites[id] = rascunho.palpites[id];
       });
-      if (!estado.bonusBloqueado) {
-        if (rascunho.campeao) estado.campeao = rascunho.campeao;
-        if (rascunho.artilheiro) estado.artilheiro = rascunho.artilheiro;
-      }
     }
 
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify({ nome, pin }));
 
-    // Bônus ainda abertos? Passa primeiro pela tela de campeão/artilheiro.
-    if (estado.bonusBloqueado) abrirTelaPalpites();
+    // A tela de bônus só aparece enquanto faltar campeão ou artilheiro
+    // (e o torneio não tiver começado). Depois de salvos, são definitivos.
+    const bonusCompleto = !!(estado.campeao && estado.artilheiro);
+    if (estado.bonusBloqueado || bonusCompleto) abrirTelaPalpites();
     else abrirTelaBonus();
   } catch (err) {
     localStorage.removeItem(CHAVE_SESSAO);
@@ -196,14 +194,35 @@ function abrirTelaBonus() {
   $('#tela-login').hidden = true;
   $('#tela-palpites').hidden = true;
   $('#tela-bonus').hidden = false;
-  $('#input-campeao').value = estado.campeao;
+
+  // Popula o select de campeão com as seleções da planilha (uma vez).
+  const select = $('#input-campeao');
+  if (select.options.length <= 1) {
+    [...new Set(estado.jogos.flatMap(j => [j.timeA, j.timeB]))]
+      .map(t => String(t).trim())
+      .filter(t => BANDEIRAS[t]) // ignora placeholders do mata-mata ("1º do A" etc.)
+      .sort((a, b) => a.localeCompare(b, 'pt'))
+      .forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = nomeComBandeira(t);
+        select.appendChild(opt);
+      });
+  }
+
+  select.value = estado.campeao || '';
   $('#input-artilheiro').value = estado.artilheiro;
+
+  // Bônus já salvo é definitivo: trava o campo correspondente.
+  select.disabled = !!estado.campeao;
+  $('#input-artilheiro').disabled = !!estado.artilheiro;
 }
 
 $('#btn-continuar').addEventListener('click', async () => {
   const btn = $('#btn-continuar');
-  const campeao = $('#input-campeao').value.trim();
-  const artilheiro = $('#input-artilheiro').value.trim();
+  // Campos travados (já salvos) não são reenviados.
+  const campeao = $('#input-campeao').disabled ? '' : $('#input-campeao').value.trim();
+  const artilheiro = $('#input-artilheiro').disabled ? '' : $('#input-artilheiro').value.trim();
   $('#bonus-erro').hidden = true;
 
   // Nada preenchido e nada salvo antes: segue direto, sem chamar a API.
@@ -225,9 +244,8 @@ $('#btn-continuar').addEventListener('click', async () => {
     });
     if (!resp.ok) throw new Error(resp.erro || 'Erro ao salvar o bônus.');
 
-    estado.campeao = campeao;
-    estado.artilheiro = artilheiro;
-    salvarRascunho();
+    if (campeao) estado.campeao = campeao;
+    if (artilheiro) estado.artilheiro = artilheiro;
     if (resp.bonusSalvo) mostrarToast('🏆 Bônus salvos!', 'sucesso');
     abrirTelaPalpites();
   } catch (err) {
@@ -477,9 +495,7 @@ function montarRanking() {
 function salvarRascunho() {
   if (!estado.nome) return;
   localStorage.setItem(chaveRascunho(estado.nome), JSON.stringify({
-    palpites: estado.palpites,
-    campeao: estado.campeao,
-    artilheiro: estado.artilheiro
+    palpites: estado.palpites
   }));
 }
 

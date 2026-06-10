@@ -37,10 +37,13 @@
     <div class="login-card">
       <h1 class="logo">🏆 Bônus</h1>
       <p class="aviso">Quem será o campeão e o artilheiro da Copa?<br />
-        Cada acerto vale <strong>10 pts</strong>. Os palpites travam no 1º jogo do torneio.</p>
+        Cada acerto vale <strong>10 pts</strong>.<br />
+        <strong>Atenção:</strong> depois de salvo, o palpite trava e não pode mais ser alterado!</p>
 
       <label for="input-campeao">Campeão</label>
-      <input id="input-campeao" type="text" placeholder="Ex.: Brasil" maxlength="40" />
+      <select id="input-campeao">
+        <option value="" disabled selected>Selecione a seleção</option>
+      </select>
 
       <label for="input-artilheiro">Artilheiro</label>
       <input id="input-artilheiro" type="text" placeholder="Ex.: Vinícius Jr." maxlength="60" />
@@ -82,6 +85,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="js/config.js?v=4"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>
