@@ -285,9 +285,15 @@ $('#btn-continuar').addEventListener('click', async () => {
   const artilheiro = $('#input-artilheiro').disabled ? '' : $('#input-artilheiro').value.trim();
   $('#bonus-erro').hidden = true;
 
-  // Nada preenchido e nada salvo antes: segue direto, sem chamar a API.
-  if (!campeao && !artilheiro) {
-    abrirTelaPalpites();
+  // Palpites de bônus são obrigatórios: não deixa continuar em branco.
+  const campeaoFinal = estado.campeao || campeao;
+  const artilheiroFinal = estado.artilheiro || artilheiro;
+  if (!campeaoFinal || !artilheiroFinal) {
+    const elErro = $('#bonus-erro');
+    elErro.textContent = !campeaoFinal && !artilheiroFinal
+      ? 'Escolha o campeão e o artilheiro para continuar — são obrigatórios e valem 20 pts cada!'
+      : (!campeaoFinal ? 'Falta escolher o campeão!' : 'Falta digitar o artilheiro!');
+    elErro.hidden = false;
     return;
   }
 
