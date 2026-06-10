@@ -84,14 +84,14 @@ function montarInit() {
   const jogadores = lerJogadores();
   const jogos = lerJogos();
   const agora = new Date();
+  const rankings = montarRankings(jogadores, jogos);
   return {
     ok: true,
     serverTime: agora.getTime(),
     bonusBloqueado: bonusBloqueado(jogos, agora),
     jogadores: jogadores.map(function (j) { return j.nome; }),
-    ranking: jogadores
-      .map(function (j) { return { nome: j.nome, pontos: Number(j.pontuacao) || 0 }; })
-      .sort(function (a, b) { return b.pontos - a.pontos; }),
+    ranking: rankings.geral,
+    rankingBrasil: rankings.brasil,
     jogos: jogos.map(function (j) {
       return {
         id: j.id,
@@ -197,6 +197,58 @@ function salvarPalpites(payload) {
 }
 
 // ===================== PONTUAÇÃO =====================
+
+/**
+ * Calcula os rankings em tempo real a partir dos palpites e dos jogos
+ * com resultado lançado: o geral (com bônus de campeão/artilheiro) e o
+ * só com jogos do Brasil. Desempate: mais placares exatos, depois nome.
+ * Regra do Esquecimento: jogo encerrado sem palpite conta como 0x0.
+ */
+function montarRankings(jogadores, jogos) {
+  const finalizados = jogos.filter(function (j) {
+    return j.golsA !== '' && j.golsB !== '' && j.dataHora;
+  });
+  const doBrasil = finalizados.filter(function (j) {
+    return String(j.timeA).trim() === 'Brasil' || String(j.timeB).trim() === 'Brasil';
+  });
+
+  const palpitesDe = {}; // "nome|idJogo" -> { golsA, golsB }
+  lerPalpites().forEach(function (p) {
+    palpitesDe[p.nome + '|' + String(p.idJogo)] = p;
+  });
+
+  function somarPontos(nome, lista) {
+    var pontos = 0, exatos = 0;
+    lista.forEach(function (jogo) {
+      const palpite = palpitesDe[nome + '|' + String(jogo.id)] || { golsA: 0, golsB: 0 };
+      const pts = pontosDoPalpite(
+        Number(palpite.golsA), Number(palpite.golsB),
+        Number(jogo.golsA), Number(jogo.golsB)
+      );
+      pontos += pts;
+      if (pts === PONTOS_PLACAR_EXATO) exatos++;
+    });
+    return { pontos: pontos, exatos: exatos };
+  }
+
+  const geral = [], brasil = [];
+  jogadores.forEach(function (j) {
+    const g = somarPontos(j.nome, finalizados);
+    if (temTexto(CAMPEAO_REAL) && mesmoTexto(j.campeao, CAMPEAO_REAL)) g.pontos += PONTOS_CAMPEAO;
+    if (temTexto(ARTILHEIRO_REAL) && mesmoTexto(j.artilheiro, ARTILHEIRO_REAL)) g.pontos += PONTOS_ARTILHEIRO;
+    geral.push({ nome: j.nome, pontos: g.pontos, exatos: g.exatos });
+
+    const b = somarPontos(j.nome, doBrasil);
+    brasil.push({ nome: j.nome, pontos: b.pontos, exatos: b.exatos });
+  });
+
+  const ordenar = function (a, b) {
+    return b.pontos - a.pontos || b.exatos - a.exatos || a.nome.localeCompare(b.nome);
+  };
+  geral.sort(ordenar);
+  brasil.sort(ordenar);
+  return { geral: geral, brasil: brasil };
+}
 
 /**
  * Recalcula a Pontuacao_Total de todos os jogadores.

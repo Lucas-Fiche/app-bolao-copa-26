@@ -266,6 +266,25 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 
 /* ===================== RANKING ===================== */
 
+.sub-abas { display: flex; gap: 8px; margin-bottom: 14px; }
+
+.sub-aba {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+}
+.sub-aba.ativa {
+  color: #fff;
+  background: var(--verde);
+  border-color: var(--verde);
+}
+
 .ranking { list-style: none; }
 .ranking li {
   display: flex;
@@ -280,6 +299,12 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 }
 .ranking .pos { min-width: 36px; font-weight: 700; }
 .ranking .nome { flex: 1; font-weight: 600; }
+.ranking .exatos {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+}
 .ranking .pontos { color: var(--verde-escuro); font-weight: 700; }
 
 /* ===================== RODAPÉ FIXO ===================== */

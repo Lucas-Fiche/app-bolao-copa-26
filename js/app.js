@@ -96,6 +96,7 @@ async function init() {
     estado.serverOffset = dados.serverTime - Date.now();
     estado.jogos = dados.jogos;
     estado.ranking = dados.ranking;
+    estado.rankingBrasil = dados.rankingBrasil || null; // null = back-end antigo
     estado.bonusBloqueado = dados.bonusBloqueado;
     estado.grupos = [...new Set(dados.jogos.map(j => j.grupo))].sort();
 
@@ -474,21 +475,35 @@ function atualizarBloqueios() {
   });
 }
 
-function montarRanking() {
+function montarRanking(tipo) {
+  tipo = tipo || 'geral';
+  document.querySelectorAll('.sub-aba').forEach(b => {
+    b.classList.toggle('ativa', b.dataset.ranking === tipo);
+  });
+  // Back-end antigo não envia o ranking do Brasil: esconde o seletor.
+  $('#sub-aba-brasil').hidden = !estado.rankingBrasil;
+
+  const dados = (tipo === 'brasil' && estado.rankingBrasil) || estado.ranking;
   const lista = $('#lista-ranking');
   lista.innerHTML = '';
-  estado.ranking.forEach((r, i) => {
+  dados.forEach((r, i) => {
     const li = document.createElement('li');
     const medalha = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
+    const exatos = r.exatos > 0
+      ? `<small class="exatos">🎯 ${r.exatos} na mosca</small>` : '';
     li.innerHTML = `<span class="pos">${medalha}</span>
-                    <span class="nome">${r.nome}</span>
+                    <span class="nome">${r.nome}${exatos}</span>
                     <span class="pontos">${r.pontos} pts</span>`;
     lista.appendChild(li);
   });
-  if (!estado.ranking.length) {
+  if (!dados.length) {
     lista.innerHTML = '<li class="aviso">Ninguém pontuou ainda.</li>';
   }
 }
+
+document.querySelectorAll('.sub-aba').forEach(btn => {
+  btn.addEventListener('click', () => montarRanking(btn.dataset.ranking));
+});
 
 // ===================== RASCUNHO (localStorage) =====================
 

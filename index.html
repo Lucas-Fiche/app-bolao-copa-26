@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f2f6fa" />
   <title>Bolão do PRTTS ⚽ Copa do Mundo 2026 🥇</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
 
@@ -73,6 +73,10 @@
 
       <div id="painel-ranking" class="painel" data-painel="ranking" hidden>
         <h2>🥇 Ranking</h2>
+        <div class="sub-abas">
+          <button class="sub-aba ativa" data-ranking="geral">Geral</button>
+          <button id="sub-aba-brasil" class="sub-aba" data-ranking="brasil">🇧🇷 Jogos do Brasil</button>
+        </div>
         <ol id="lista-ranking" class="ranking"></ol>
       </div>
     </main>
@@ -85,6 +89,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="js/config.js?v=4"></script>
-  <script src="js/app.js?v=9"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>
