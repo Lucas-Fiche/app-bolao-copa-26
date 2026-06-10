@@ -560,12 +560,31 @@ function avisarCotaBaixa(restantes) {
   }
 }
 
+/**
+ * Normaliza nomes de seleções para comparação: minúsculas, sem acentos
+ * e sem pontuação. Assim "Bósnia e Herz.", "Bosnia & Herzegovina" e
+ * variações com acento/abreviação casam entre si.
+ */
+function normalizarNome(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-z0-9]+/g, ' ')                       // pontuação vira espaço
+    .trim();
+}
+
+var _mapaNomesNormalizado = null;
 function traduzirTime(nomeApi) {
-  return NOMES_API[String(nomeApi).trim()] || String(nomeApi).trim();
+  if (!_mapaNomesNormalizado) {
+    _mapaNomesNormalizado = {};
+    Object.keys(NOMES_API).forEach(function (k) {
+      _mapaNomesNormalizado[normalizarNome(k)] = NOMES_API[k];
+    });
+  }
+  return _mapaNomesNormalizado[normalizarNome(nomeApi)] || String(nomeApi).trim();
 }
 
 function chaveTimes(a, b) {
-  return String(a).trim().toLowerCase() + '|' + String(b).trim().toLowerCase();
+  return normalizarNome(a) + '|' + normalizarNome(b);
 }
 
 /** Mapa "timeA|timeB" -> número da linha na aba Jogos (1-based). */

@@ -200,8 +200,25 @@ select:focus, input:focus {
   font-size: 0.78rem;
   color: var(--texto-suave);
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-.jogo-data .resultado { color: var(--amarelo); font-weight: 700; }
+
+/* Placar final em faixa própria, fora do esmaecimento do bloqueio */
+.jogo-resultado {
+  text-align: center;
+  margin-bottom: 10px;
+  padding: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8a6d00;
+  background: var(--amarelo-claro);
+  border: 1px solid rgba(240, 164, 23, 0.4);
+  border-radius: 10px;
+}
+.jogo-resultado b { font-size: 1.05rem; }
 
 .badge-grupo {
   display: inline-block;

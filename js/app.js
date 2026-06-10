@@ -445,8 +445,9 @@ function criarCardJogo(jogo, comGrupo) {
 
   card.innerHTML = `
     <div class="jogo-data">📅 ${jogo.dataHoraTexto}${comGrupo
-      ? ` <span class="badge-grupo">Grupo ${jogo.grupo}</span>` : ''}${encerrado
-      ? ` <span class="resultado">Resultado: ${jogo.golsAReal} x ${jogo.golsBReal}</span>` : ''}</div>
+      ? ` <span class="badge-grupo">Grupo ${jogo.grupo}</span>` : ''}</div>
+    ${encerrado
+      ? `<div class="jogo-resultado">⚽ Placar final: <b>${jogo.golsAReal} x ${jogo.golsBReal}</b></div>` : ''}
     <div class="jogo-placar">
       <span class="time time-a">${nomeComBandeira(jogo.timeA)}</span>
       <input type="number" min="0" max="99" inputmode="numeric" class="gols"
