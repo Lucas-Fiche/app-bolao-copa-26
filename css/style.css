@@ -1,17 +1,22 @@
 /* ============================================================
- * BOLÃO COPA 2026 — Mobile-first
+ * BOLÃO DO PRTTS ⚽ COPA DO MUNDO 2026 — Mobile-first, tema claro
  * ============================================================ */
 
 :root {
-  --azul-escuro: #0b1f3a;
-  --azul: #14365c;
-  --verde: #18c964;
-  --verde-escuro: #109a4c;
-  --amarelo: #ffd34d;
-  --branco: #f5f7fa;
-  --cinza: #8da0b5;
-  --vermelho: #ff5d5d;
-  --raio: 14px;
+  --fundo: #f2f6fa;
+  --fundo-2: #e8eef5;
+  --card: #ffffff;
+  --borda: #dfe7ef;
+  --texto: #1d2d3e;
+  --texto-suave: #6b7a8c;
+  --verde: #0caf60;
+  --verde-escuro: #0a9050;
+  --verde-claro: #e6f7ee;
+  --amarelo: #f0a417;
+  --amarelo-claro: #fdf3dd;
+  --vermelho: #df4a51;
+  --raio: 16px;
+  --sombra: 0 2px 12px rgba(23, 48, 77, 0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,53 +29,63 @@ html, body { height: 100%; }
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(160deg, var(--azul-escuro), #122c4f 60%, #0d2342);
-  color: var(--branco);
+  background: linear-gradient(170deg, var(--fundo) 30%, var(--fundo-2));
+  background-attachment: fixed;
+  color: var(--texto);
   -webkit-font-smoothing: antialiased;
 }
 
 .tela { min-height: 100dvh; display: flex; flex-direction: column; }
 
-/* ===================== LOGIN ===================== */
+/* ===================== LOGIN E BÔNUS (cartão centralizado) ===================== */
 
-#tela-login { justify-content: center; align-items: center; padding: 24px; }
+#tela-login, #tela-bonus {
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
 
 .login-card {
   width: 100%;
-  max-width: 380px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  max-width: 400px;
+  background: var(--card);
+  border: 1px solid var(--borda);
   border-radius: var(--raio);
-  padding: 28px 22px;
-  backdrop-filter: blur(8px);
+  padding: 32px 24px;
+  box-shadow: var(--sombra);
 }
 
 .logo {
   text-align: center;
-  font-size: 2rem;
-  line-height: 1.1;
+  font-size: 1.7rem;
+  line-height: 1.3;
   margin-bottom: 24px;
 }
-.logo span { color: var(--verde); }
+.logo span { display: inline-block; font-size: 1rem; color: var(--verde-escuro); }
 
 label {
   display: block;
   font-size: 0.85rem;
-  color: var(--cinza);
-  margin: 14px 0 6px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin: 16px 0 6px;
 }
 
 select, input[type="text"], input[type="password"] {
   width: 100%;
   padding: 13px 14px;
   font-size: 1rem;
-  color: var(--branco);
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--texto);
+  background: #fff;
+  border: 1px solid var(--borda);
   border-radius: 10px;
   outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-select:focus, input:focus { border-color: var(--verde); }
+select:focus, input:focus {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(12, 175, 96, 0.15);
+}
 
 #input-pin { letter-spacing: 0.5em; text-align: center; }
 
@@ -78,34 +93,37 @@ select:focus, input:focus { border-color: var(--verde); }
 
 .btn-primario {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 22px;
   padding: 15px;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #06250f;
+  color: #fff;
   background: linear-gradient(180deg, var(--verde), var(--verde-escuro));
   border: none;
   border-radius: 12px;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(12, 175, 96, 0.3);
   transition: transform 0.1s, filter 0.15s;
 }
 .btn-primario:active { transform: scale(0.98); }
-.btn-primario:disabled { filter: grayscale(0.7); cursor: wait; }
+.btn-primario:disabled { filter: grayscale(0.7); cursor: wait; box-shadow: none; }
 
 .btn-fantasma {
   padding: 8px 14px;
   font-size: 0.85rem;
-  color: var(--branco);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--sombra);
 }
 .btn-fantasma.ativa {
-  color: #06250f;
-  background: var(--amarelo);
-  border-color: var(--amarelo);
+  color: #fff;
+  background: var(--verde);
+  border-color: var(--verde);
 }
 
 .topo-acoes { display: flex; gap: 8px; }
@@ -116,16 +134,16 @@ select:focus, input:focus { border-color: var(--verde); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px 10px;
+  padding: 16px 16px 10px;
 }
 .topo strong { display: block; font-size: 1.05rem; }
-.topo small { color: var(--cinza); font-size: 0.75rem; }
+.topo small { color: var(--texto-suave); font-size: 0.75rem; }
 
 .abas {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 6px 16px 12px;
+  padding: 6px 16px 14px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -136,15 +154,16 @@ select:focus, input:focus { border-color: var(--verde); }
   padding: 9px 16px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--branco);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--texto);
+  background: var(--card);
+  border: 1px solid var(--borda);
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--sombra);
 }
 .aba.ativa {
-  color: #06250f;
+  color: #fff;
   background: var(--verde);
   border-color: var(--verde);
 }
@@ -160,10 +179,29 @@ select:focus, input:focus { border-color: var(--verde); }
 .painel { margin-bottom: 18px; }
 
 .painel h2 {
-  font-size: 1.1rem;
-  margin: 10px 0 12px;
+  font-size: 1.05rem;
+  margin: 10px 0 14px;
 }
-.painel h2 small { font-weight: 400; font-size: 0.75rem; color: var(--cinza); }
+.painel h2 small { font-weight: 400; font-size: 0.75rem; color: var(--texto-suave); }
+
+/* ===================== CARD DE JOGO ===================== */
+
+.jogo {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--sombra);
+  transition: opacity 0.2s;
+}
+
+.jogo-data {
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  margin-bottom: 10px;
+}
+.jogo-data .resultado { color: var(--amarelo); font-weight: 700; }
 
 .badge-grupo {
   display: inline-block;
@@ -171,28 +209,10 @@ select:focus, input:focus { border-color: var(--verde); }
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--amarelo);
-  border: 1px solid rgba(255, 211, 77, 0.45);
+  background: var(--amarelo-claro);
   border-radius: 999px;
   margin-left: 4px;
 }
-
-/* ===================== CARD DE JOGO ===================== */
-
-.jogo {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--raio);
-  padding: 12px 14px;
-  margin-bottom: 12px;
-  transition: opacity 0.2s;
-}
-
-.jogo-data {
-  font-size: 0.78rem;
-  color: var(--cinza);
-  margin-bottom: 10px;
-}
-.jogo-data .resultado { color: var(--amarelo); font-weight: 600; }
 
 .jogo-placar {
   display: grid;
@@ -204,7 +224,7 @@ select:focus, input:focus { border-color: var(--verde); }
 .time { font-weight: 600; font-size: 0.95rem; }
 .time-a { text-align: right; }
 .time-b { text-align: left; }
-.x { text-align: center; color: var(--cinza); }
+.x { text-align: center; color: var(--texto-suave); }
 
 input.gols {
   width: 52px;
@@ -212,26 +232,28 @@ input.gols {
   text-align: center;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--branco);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--texto);
+  background: var(--fundo);
+  border: 1px solid var(--borda);
   border-radius: 10px;
   outline: none;
   -moz-appearance: textfield;
   appearance: textfield;
+  transition: border-color 0.15s, background 0.15s;
 }
 input.gols::-webkit-outer-spin-button,
 input.gols::-webkit-inner-spin-button { -webkit-appearance: none; }
-input.gols:focus { border-color: var(--verde); }
+input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 
 /* Jogo bloqueado: desabilitado e acinzentado */
-.jogo.bloqueado { opacity: 0.45; filter: grayscale(0.8); }
+.jogo.bloqueado { opacity: 0.55; filter: grayscale(0.9); background: #f3f5f8; }
 .jogo.bloqueado input.gols { cursor: not-allowed; }
 .jogo-trava {
   margin-top: 8px;
   font-size: 0.75rem;
   color: var(--vermelho);
   text-align: center;
+  font-weight: 600;
 }
 
 /* ===================== RANKING ===================== */
@@ -241,15 +263,16 @@ input.gols:focus { border-color: var(--verde); }
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--card);
+  border: 1px solid var(--borda);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 13px 16px;
   margin-bottom: 8px;
+  box-shadow: var(--sombra);
 }
 .ranking .pos { min-width: 36px; font-weight: 700; }
 .ranking .nome { flex: 1; font-weight: 600; }
-.ranking .pontos { color: var(--verde); font-weight: 700; }
+.ranking .pontos { color: var(--verde-escuro); font-weight: 700; }
 
 /* ===================== RODAPÉ FIXO ===================== */
 
@@ -258,14 +281,20 @@ input.gols:focus { border-color: var(--verde); }
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, transparent, var(--azul-escuro) 35%);
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(242, 246, 250, 0), var(--fundo) 40%);
 }
 .rodape .btn-primario { margin-top: 0; max-width: 480px; display: block; margin-inline: auto; }
 
 /* ===================== AVISOS / TOAST ===================== */
 
-.aviso { color: var(--cinza); font-size: 0.85rem; text-align: center; padding: 8px 0; }
+.aviso {
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+  text-align: center;
+  padding: 8px 0;
+  line-height: 1.45;
+}
 .erro { color: var(--vermelho); font-size: 0.85rem; text-align: center; margin-top: 12px; }
 
 .toast {
@@ -277,16 +306,18 @@ input.gols:focus { border-color: var(--verde); }
   padding: 12px 18px;
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--texto);
   border-radius: 12px;
-  background: var(--azul);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-left: 5px solid var(--texto-suave);
+  box-shadow: 0 8px 28px rgba(23, 48, 77, 0.18);
   z-index: 99;
   animation: toast-in 0.25s ease;
 }
-.toast.sucesso { border-color: var(--verde); }
-.toast.alerta { border-color: var(--amarelo); }
-.toast.erro { border-color: var(--vermelho); }
+.toast.sucesso { border-left-color: var(--verde); }
+.toast.alerta { border-left-color: var(--amarelo); }
+.toast.erro { border-left-color: var(--vermelho); }
 
 @keyframes toast-in {
   from { opacity: 0; transform: translate(-50%, -8px); }
