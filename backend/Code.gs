@@ -395,6 +395,15 @@ function pontosDoPalpite(palpiteA, palpiteB, realA, realB) {
  * aposta. Rode manualmente ou crie um acionador diário.
  */
 function atualizarOdds() {
+  // Economia de créditos: sem jogos futuros, não há odds para buscar.
+  const futuros = lerJogos().filter(function (j) {
+    return j.dataHora && j.dataHora.getTime() > Date.now();
+  });
+  if (!futuros.length) {
+    Logger.log('atualizarOdds: nenhum jogo futuro — chamada à API poupada.');
+    return;
+  }
+
   const eventos = chamarOddsApi('odds', '&regions=eu&markets=h2h&oddsFormat=decimal');
   const aba = getAba(ABA_JOGOS);
   const linhaDe = indexarJogosPorTimes(aba);
@@ -443,6 +452,19 @@ function atualizarOdds() {
  * correção manual sua nunca é sobrescrita. Acionador sugerido: a cada 4h.
  */
 function atualizarPlacares() {
+  // Economia de créditos: só chama a API se existir jogo iniciado há
+  // mais de 2h (tempo de acabar) ainda sem resultado na planilha.
+  // Em dias sem jogos, o acionador roda e não gasta nada.
+  const agora = Date.now();
+  const pendentes = lerJogos().filter(function (j) {
+    return j.dataHora && (agora - j.dataHora.getTime()) > 2 * 3600000 &&
+           (j.golsA === '' || j.golsB === '');
+  });
+  if (!pendentes.length) {
+    Logger.log('atualizarPlacares: nenhum resultado pendente — chamada à API poupada.');
+    return;
+  }
+
   const eventos = chamarOddsApi('scores', '&daysFrom=2');
   const aba = getAba(ABA_JOGOS);
   const valores = aba.getDataRange().getValues();
@@ -499,8 +521,29 @@ function chamarOddsApi(endpoint, params) {
   if (resp.getResponseCode() !== 200) {
     throw new Error('The Odds API (' + endpoint + '): ' + resp.getContentText());
   }
-  Logger.log('Créditos restantes: ' + resp.getHeaders()['x-requests-remaining']);
+  const headers = resp.getHeaders();
+  const restantes = Number(headers['x-requests-remaining'] || headers['X-Requests-Remaining']);
+  Logger.log('Créditos restantes: ' + restantes);
+  if (restantes && restantes < 50) avisarCotaBaixa(restantes);
   return JSON.parse(resp.getContentText());
+}
+
+/** Avisa por e-mail (1x por mês) quando a cota da The Odds API ficar baixa. */
+function avisarCotaBaixa(restantes) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const mes = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM');
+    if (props.getProperty('avisoCotaOdds') === mes) return;
+    props.setProperty('avisoCotaOdds', mes);
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(),
+      '⚠️ Bolão: créditos da The Odds API acabando',
+      'Restam apenas ' + restantes + ' créditos neste mês.\n\n' +
+      'Se zerarem, o app continua funcionando normalmente — apenas as ' +
+      'odds e o lançamento automático de placares param até a cota ' +
+      'renovar; nesse período, lance os resultados manualmente na aba Jogos.');
+  } catch (e) {
+    Logger.log('Falha ao enviar aviso de cota: ' + e);
+  }
 }
 
 function traduzirTime(nomeApi) {

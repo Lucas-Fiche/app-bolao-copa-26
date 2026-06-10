@@ -434,12 +434,14 @@ function criarCardJogo(jogo, comGrupo) {
   const palpite = estado.palpites[jogo.id] || {};
   const encerrado = jogo.golsAReal !== null && jogo.golsBReal !== null;
 
-  // Odds (1 x 2) para ajudar na escolha; some quando o resultado sai.
+  // Odds (casa/empate/fora) para ajudar na escolha; somem com o resultado.
   const fmtOdd = (n) => Number(n).toFixed(2);
   const linhaOdds = (jogo.odds && !encerrado)
-    ? `<div class="jogo-odds">💰 <b>${fmtOdd(jogo.odds.a)}</b>
-        <span>·</span> X <b>${fmtOdd(jogo.odds.x)}</b>
-        <span>·</span> <b>${fmtOdd(jogo.odds.b)}</b></div>` : '';
+    ? `<div class="jogo-odds">
+        <div class="odd"><small>Casa</small><b>${fmtOdd(jogo.odds.a)}</b></div>
+        <div class="odd"><small>Empate</small><b>${fmtOdd(jogo.odds.x)}</b></div>
+        <div class="odd"><small>Fora</small><b>${fmtOdd(jogo.odds.b)}</b></div>
+      </div>` : '';
 
   card.innerHTML = `
     <div class="jogo-data">📅 ${jogo.dataHoraTexto}${comGrupo

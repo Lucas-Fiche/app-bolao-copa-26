@@ -253,15 +253,36 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   box-shadow: 0 2px 14px rgba(0, 151, 57, 0.18);
 }
 
-/* Odds (1 x 2) sob o placar */
+/* Odds (casa/empate/fora) sob o placar */
 .jogo-odds {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-width: 320px;
+  margin: 10px auto 0;
+}
+.jogo-odds .odd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+.jogo-odds small {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--texto-suave);
 }
-.jogo-odds b { color: var(--verde-escuro); font-weight: 700; }
-.jogo-odds span { margin: 0 4px; opacity: 0.5; }
+.jogo-odds b {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+}
 
 /* Jogo bloqueado: placar desabilitado e acinzentado (a lista de
    palpites revelados continua legível). */
