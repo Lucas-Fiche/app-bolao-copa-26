@@ -56,7 +56,7 @@ body {
 .craques {
   width: min(92%, 360px);
   height: auto;
-  margin-bottom: -78px;       /* parte de baixo fica atrás do cartão */
+  margin-bottom: -22px;       /* só a borda do recorte fica atrás do cartão */
   position: relative;
   z-index: 0;
   filter: drop-shadow(0 6px 10px rgba(23, 48, 77, 0.2));
