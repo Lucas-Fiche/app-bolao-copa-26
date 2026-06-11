@@ -169,6 +169,7 @@ async function init() {
       .sort((a, b) => pesoFase(a) - pesoFase(b) || a.localeCompare(b, 'pt'));
 
     const select = $('#select-nome');
+    estado.jogadores = dados.jogadores; // ordem de cadastro (cores do gráfico)
     dados.jogadores.forEach(nome => {
       const opt = document.createElement('option');
       opt.value = nome;
@@ -671,9 +672,18 @@ document.querySelectorAll('.sub-aba').forEach(btn => {
 
 // ===================== GRÁFICO DE EVOLUÇÃO =====================
 
-const CORES_GRAFICO = ['#0caf60', '#2f7de1', '#f0a417', '#df4a51', '#8e5bd1',
-                       '#0aa3a3', '#d1589b', '#7a8a1e', '#b3622a', '#4a6fa5',
-                       '#5e548e', '#3d8b5f'];
+/**
+ * Cor fixa por jogador, derivada da posição de cadastro na aba Jogadores
+ * (novos entram no fim da planilha, então ninguém muda de cor). O ângulo
+ * de ouro espalha os matizes; a luminosidade varia para reforçar a
+ * diferença entre cores vizinhas.
+ */
+function corDoJogador(nome) {
+  const idx = Math.max(0, (estado.jogadores || []).indexOf(nome));
+  const hue = Math.round(idx * 137.508) % 360;
+  const luz = 36 + (idx * 5) % 16; // 36–51%
+  return `hsl(${hue}, 68%, ${luz}%)`;
+}
 
 function desenharEvolucao() {
   const cont = $('#grafico-evolucao');
@@ -712,8 +722,8 @@ function desenharEvolucao() {
       svg += `<text x="${x(i)}" y="${H - 8}" class="eixo" text-anchor="middle">${datas[i]}</text>`;
     });
   // Uma linha por jogador
-  nomes.forEach((nome, n) => {
-    const cor = CORES_GRAFICO[n % CORES_GRAFICO.length];
+  nomes.forEach(nome => {
+    const cor = corDoJogador(nome);
     const pontos = datas.map((d, i) =>
       `${x(i)},${y(porNome[nome][d] !== undefined ? porNome[nome][d] : 0)}`);
     svg += `<polyline points="${pontos.join(' ')}" fill="none" stroke="${cor}"
@@ -724,8 +734,8 @@ function desenharEvolucao() {
   svg += '</svg>';
 
   // Legenda na ordem do ranking atual
-  const legenda = nomes.map((nome, n) =>
-    `<span class="legenda-item"><i style="background:${CORES_GRAFICO[n % CORES_GRAFICO.length]}"></i>
+  const legenda = nomes.map(nome =>
+    `<span class="legenda-item"><i style="background:${corDoJogador(nome)}"></i>
       ${nome} <b>${porNome[nome][ultima] !== undefined ? porNome[nome][ultima] : 0}</b></span>`).join('');
 
   cont.innerHTML = svg + `<div class="legenda">${legenda}</div>`;
