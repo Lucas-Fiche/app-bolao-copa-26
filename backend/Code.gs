@@ -40,16 +40,8 @@ const MINUTOS_BLOQUEIO = 30;
 const PONTOS_BONUS = 20;          // acertou campeão ou artilheiro
 const PONTOS_BONUS_SOZINHO = 30;  // foi o ÚNICO a acertar aquela categoria
 
-// Cada fase do mata-mata abre para palpites na data abaixo (00:00, fuso
-// do script). Antes disso, os jogos da fase ficam travados.
-const ABERTURA_FASES = {
-  avos16:    '27/06/2026 00:00:00',
-  oitavas:   '04/07/2026 00:00:00',
-  quartas:   '08/07/2026 00:00:00',
-  semifinal: '12/07/2026 00:00:00',
-  terceiro:  '16/07/2026 00:00:00',
-  final:     '16/07/2026 00:00:00'
-};
+// Cada fase do mata-mata abre para palpites à MEIA-NOITE DO DIA ANTERIOR
+// à primeira partida da fase (calculado automaticamente da aba Jogos).
 
 /**
  * Pontuação por fase, definida pelo valor da coluna "Grupo" da aba Jogos.
@@ -173,15 +165,13 @@ function montarInit() {
   const visiveis = jogadoresVisiveis(jogadores);
   const rankings = montarRankings(visiveis, jogos);
   const palpitesPorJogo = montarPalpitesRevelados(visiveis, jogos, agora);
+  const aberturas = aberturasDasFases(jogos);
   return {
     ok: true,
     serverTime: agora.getTime(),
     aberturasFases: (function () {
       const out = {};
-      Object.keys(ABERTURA_FASES).forEach(function (k) {
-        const d = parseDataHora(ABERTURA_FASES[k]);
-        if (d) out[k] = d.getTime();
-      });
+      Object.keys(aberturas).forEach(function (k) { out[k] = aberturas[k].getTime(); });
       return out;
     })(),
     bonusBloqueado: bonusBloqueado(jogos, agora),
@@ -202,7 +192,7 @@ function montarInit() {
         odds: (Number(j.oddA) > 0 && Number(j.oddX) > 0 && Number(j.oddB) > 0)
           ? { a: Number(j.oddA), x: Number(j.oddX), b: Number(j.oddB) }
           : null,
-        bloqueado: jogoBloqueado(j, agora),
+        bloqueado: jogoBloqueado(j, agora, aberturas),
         palpites: palpitesPorJogo[j.id] || null
       };
     })
@@ -282,6 +272,7 @@ function salvarPalpites(payload) {
   try {
     const agora = new Date();
     const jogos = lerJogos();
+    const aberturas = aberturasDasFases(jogos);
     const mapaJogos = {};
     jogos.forEach(function (j) { mapaJogos[String(j.id)] = j; });
 
@@ -301,15 +292,16 @@ function salvarPalpites(payload) {
         rejeitados.push({ idJogo: p.idJogo, motivo: 'Jogo não encontrado.' });
         return;
       }
-      // Cada fase do mata-mata só abre para palpites na sua data.
-      if (mataMataAindaFechado(jogo.grupo, agora)) {
+      // Cada fase do mata-mata só abre na véspera da primeira partida dela.
+      if (mataMataAindaFechado(jogo.grupo, agora, aberturas)) {
         rejeitados.push({ idJogo: p.idJogo,
-          motivo: 'Palpites desta fase abrem em ' + formatarDataHora(aberturaDaFase(jogo.grupo)) + '.' });
+          motivo: 'Palpites desta fase abrem em ' +
+            formatarDataHora(aberturas[chaveDaFase(jogo.grupo)]) + '.' });
         return;
       }
       // Regra dos 30 minutos: jogo prestes a começar, em andamento ou
       // encerrado não aceita alteração — o palpite anterior é mantido.
-      if (jogoBloqueado(jogo, agora)) {
+      if (jogoBloqueado(jogo, agora, aberturas)) {
         rejeitados.push({ idJogo: p.idJogo, motivo: 'Palpites encerrados para este jogo.' });
         return;
       }
@@ -773,9 +765,11 @@ function enviarLembretes() {
   const iniAmanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
   const fimAmanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 2);
 
-  const jogosAmanha = lerJogos().filter(function (j) {
+  const todosJogos = lerJogos();
+  const aberturas = aberturasDasFases(todosJogos);
+  const jogosAmanha = todosJogos.filter(function (j) {
     return j.dataHora && j.dataHora >= iniAmanha && j.dataHora < fimAmanha &&
-           !mataMataAindaFechado(j.grupo, agora);
+           !mataMataAindaFechado(j.grupo, agora, aberturas);
   });
   if (!jogosAmanha.length) {
     Logger.log('enviarLembretes: sem jogos amanhã.');
@@ -863,9 +857,9 @@ function dataCurta(valor, completa) {
 
 // ===================== REGRAS DE TEMPO =====================
 
-function jogoBloqueado(jogo, agora) {
+function jogoBloqueado(jogo, agora, aberturas) {
   if (!jogo.dataHora) return true; // sem data válida, melhor não aceitar palpite
-  if (mataMataAindaFechado(jogo.grupo, agora)) return true;
+  if (mataMataAindaFechado(jogo.grupo, agora, aberturas)) return true;
   return (jogo.dataHora.getTime() - agora.getTime()) < MINUTOS_BLOQUEIO * 60 * 1000;
 }
 
@@ -882,13 +876,28 @@ function chaveDaFase(grupo) {
   return null;
 }
 
-function aberturaDaFase(grupo) {
-  const chave = chaveDaFase(grupo);
-  return chave ? parseDataHora(ABERTURA_FASES[chave]) : null;
+/**
+ * Abertura de cada fase: 00:00 do dia anterior à primeira partida dela.
+ * Calculado da própria aba Jogos — mudou a data lá, a abertura acompanha.
+ */
+function aberturasDasFases(jogos) {
+  const primeira = {};
+  jogos.forEach(function (j) {
+    const chave = chaveDaFase(j.grupo);
+    if (!chave || !j.dataHora) return;
+    if (!primeira[chave] || j.dataHora < primeira[chave]) primeira[chave] = j.dataHora;
+  });
+  const aberturas = {};
+  Object.keys(primeira).forEach(function (k) {
+    const d = primeira[k];
+    aberturas[k] = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, 0, 0, 0);
+  });
+  return aberturas;
 }
 
-function mataMataAindaFechado(grupo, agora) {
-  const abertura = aberturaDaFase(grupo);
+function mataMataAindaFechado(grupo, agora, aberturas) {
+  const chave = chaveDaFase(grupo);
+  const abertura = (chave && aberturas) ? aberturas[chave] : null;
   return !!abertura && agora.getTime() < abertura.getTime();
 }
 
