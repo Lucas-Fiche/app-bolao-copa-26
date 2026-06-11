@@ -371,8 +371,6 @@ function montarAbas() {
   nav.innerHTML = '';
   nav.appendChild(criarAba('📅 Hoje', 'hoje'));
   nav.appendChild(criarAba('🇧🇷', 'brasil'));
-  nav.appendChild(criarAba('📜 Histórico', 'historico'));
-  nav.appendChild(criarAba('💰 Prêmio', 'financeiro'));
   estado.grupos.forEach(grupo => {
     nav.appendChild(criarAba(rotuloGrupo(grupo), grupo));
   });
@@ -391,7 +389,6 @@ function ativarAba(id) {
   estado.abaAtiva = id;
   if (id === 'hoje') montarPainelHoje(); // reconstrói com data/bloqueios atuais
   if (id === 'historico') montarPainelHistorico();
-  if (id === 'financeiro') montarPainelFinanceiro();
   document.querySelectorAll('.aba').forEach(b => {
     b.classList.toggle('ativa', b.dataset.aba === id);
   });
@@ -399,10 +396,12 @@ function ativarAba(id) {
     p.hidden = p.dataset.painel !== id;
   });
   $('#btn-ranking').classList.toggle('ativa', id === 'ranking');
+  $('#btn-historico').classList.toggle('ativa', id === 'historico');
   $('#conteudo').scrollTop = 0;
 }
 
 $('#btn-ranking').addEventListener('click', () => ativarAba('ranking'));
+$('#btn-historico').addEventListener('click', () => ativarAba('historico'));
 
 function montarPaineisDeGrupos() {
   const container = $('#paineis-grupos');
@@ -416,15 +415,13 @@ function montarPaineisDeGrupos() {
   painelHoje.hidden = true;
   container.appendChild(painelHoje);
 
-  // Painéis "Histórico" e "Prêmio" (conteúdo montado ao ativar a aba).
-  ['historico', 'financeiro'].forEach(id => {
-    const p = document.createElement('div');
-    p.className = 'painel';
-    p.dataset.painel = id;
-    p.id = 'painel-' + id;
-    p.hidden = true;
-    container.appendChild(p);
-  });
+  // Painel "Histórico" (conteúdo montado ao ativar pelo botão do topo).
+  const painelHist = document.createElement('div');
+  painelHist.className = 'painel';
+  painelHist.dataset.painel = 'historico';
+  painelHist.id = 'painel-historico';
+  painelHist.hidden = true;
+  container.appendChild(painelHist);
 
   // Painel "Brasil": só os jogos da Seleção, em qualquer fase.
   const painelBrasil = document.createElement('div');
@@ -579,7 +576,7 @@ const PREMIOS = [
 ];
 
 function montarPainelFinanceiro() {
-  const painel = $('#painel-financeiro');
+  const alvo = $('#financeiro-conteudo');
   const n = (estado.ranking || []).length;
   const total = n * VALOR_ENTRADA;
   const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -591,8 +588,7 @@ function montarPainelFinanceiro() {
       <b class="premio-valor">${fmt(total * p.pct)}</b>
     </li>`).join('');
 
-  painel.innerHTML = `
-    <h2>💰 Financeiro</h2>
+  alvo.innerHTML = `
     <div class="premio-total">
       <small>Prêmio total</small>
       <strong>${fmt(total)}</strong>
@@ -734,12 +730,18 @@ function montarRanking(tipo) {
   $('#painel-ranking').classList.toggle('tema-brasil', ehBrasil);
   $('#ranking-brasil-chamada').hidden = !ehBrasil;
 
-  // Visão "Evolução": gráfico no lugar da lista.
+  // Visões "Evolução" e "Prêmio" ocupam o lugar da lista.
   const ehEvolucao = tipo === 'evolucao';
+  const ehFinanceiro = tipo === 'financeiro';
   $('#grafico-evolucao').hidden = !ehEvolucao;
-  $('#lista-ranking').hidden = ehEvolucao;
+  $('#financeiro-conteudo').hidden = !ehFinanceiro;
+  $('#lista-ranking').hidden = ehEvolucao || ehFinanceiro;
   if (ehEvolucao) {
     desenharEvolucao();
+    return;
+  }
+  if (ehFinanceiro) {
+    montarPainelFinanceiro();
     return;
   }
 

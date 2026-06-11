@@ -70,6 +70,7 @@
         <small id="topo-status">Palpites carregados</small>
       </div>
       <div class="topo-acoes">
+        <button id="btn-historico" class="btn-fantasma">📜 Histórico</button>
         <button id="btn-ranking" class="btn-fantasma">🥇 Ranking</button>
         <button id="btn-sair" class="btn-fantasma">Sair</button>
       </div>
@@ -86,8 +87,10 @@
           <button class="sub-aba ativa" data-ranking="geral">Geral</button>
           <button id="sub-aba-brasil" class="sub-aba" data-ranking="brasil">🇧🇷 Jogos do Brasil</button>
           <button class="sub-aba" data-ranking="evolucao">📈 Evolução</button>
+          <button class="sub-aba" data-ranking="financeiro">💰 Prêmio</button>
         </div>
         <div id="grafico-evolucao" hidden></div>
+        <div id="financeiro-conteudo" hidden></div>
         <div id="ranking-brasil-chamada" class="chamada-brasil" hidden>
           🇧🇷 Quem mais entende da Seleção? ⚽ Rumo ao Hexa! 🏆
         </div>
@@ -103,6 +106,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="js/config.js?v=4"></script>
-  <script src="js/app.js?v=27"></script>
+  <script src="js/app.js?v=28"></script>
 </body>
 </html>
