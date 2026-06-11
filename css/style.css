@@ -56,10 +56,10 @@ body {
 .craques {
   width: min(92%, 360px);
   height: auto;
-  margin-bottom: -14px;       /* encosta os pés no cartão */
+  margin-bottom: -78px;       /* parte de baixo fica atrás do cartão */
   position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 10px 14px rgba(23, 48, 77, 0.25));
+  z-index: 0;
+  filter: drop-shadow(0 6px 10px rgba(23, 48, 77, 0.2));
   animation: craques-entrada 0.6s ease;
   pointer-events: none;
 }
@@ -67,7 +67,11 @@ body {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.login-envelope .login-card { width: 100%; }
+.login-envelope .login-card {
+  width: 100%;
+  position: relative;
+  z-index: 1; /* cartão na frente dos craques */
+}
 
 .login-card {
   width: 100%;
