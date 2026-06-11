@@ -604,10 +604,10 @@ function atualizarPlacares() {
 
 /**
  * Substitui automaticamente os placeholders do mata-mata pelos confrontos
- * reais publicados pela API. Critério de casamento: linha de fase (Grupo
- * não é letra) cujos DOIS times ainda são placeholders (não constam na
- * lista de seleções) e cujo horário bate com o do evento (±45 min). Só
- * preenche quando o casamento é único; ambiguidades vão para o log.
+ * reais publicados pela API. O casamento é por DIA: a linha de fase com
+ * os dois times ainda em placeholder, no mesmo dia do evento, recebe os
+ * times reais E o horário oficial (a Data_Hora estimada é corrigida).
+ * Com vários jogos no dia, os eventos são atribuídos em ordem de horário.
  */
 function preencherConfrontosMataMata(eventos, aba) {
   const valores = aba.getDataRange().getValues();
@@ -624,39 +624,50 @@ function preencherConfrontosMataMata(eventos, aba) {
   // Confrontos que já existem na planilha (para não duplicar).
   const jaExiste = indexarJogosPorTimes(aba);
 
+  // Linhas de mata-mata ainda com placeholders, em ordem de horário.
+  const vagas = [];
+  for (var i = 1; i < valores.length; i++) {
+    const l = valores[i];
+    if (String(l[0]).trim() === '') continue;
+    if (normalizarNome(l[1]).length <= 1) continue; // fase de grupos
+    if (!ehPlaceholder(l[3]) || !ehPlaceholder(l[4])) continue;
+    const dataHora = parseDataHora(l[2]);
+    if (dataHora) vagas.push({ linha: i + 1, dataHora: dataHora, usada: false });
+  }
+  if (!vagas.length) return;
+  vagas.sort(function (a, b) { return a.dataHora - b.dataHora; });
+
+  const mesmoDia = function (d1, d2) {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+  };
+
   var preenchidos = 0;
-  eventos.forEach(function (ev) {
-    const casa = traduzirTime(ev.home_team);
-    const fora = traduzirTime(ev.away_team);
-    if (ehPlaceholder(casa) || ehPlaceholder(fora)) return; // evento sem times reais
-    if (jaExiste[chaveTimes(casa, fora)] || jaExiste[chaveTimes(fora, casa)]) return;
+  eventos
+    .slice()
+    .sort(function (a, b) { return new Date(a.commence_time) - new Date(b.commence_time); })
+    .forEach(function (ev) {
+      const casa = traduzirTime(ev.home_team);
+      const fora = traduzirTime(ev.away_team);
+      if (ehPlaceholder(casa) || ehPlaceholder(fora)) return; // evento sem times reais
+      if (jaExiste[chaveTimes(casa, fora)] || jaExiste[chaveTimes(fora, casa)]) return;
 
-    const inicio = new Date(ev.commence_time).getTime();
-    if (isNaN(inicio)) return;
+      const inicio = new Date(ev.commence_time);
+      if (isNaN(inicio.getTime())) return;
 
-    // Candidatas: linhas de mata-mata com placeholders e horário compatível.
-    const candidatas = [];
-    for (var i = 1; i < valores.length; i++) {
-      const l = valores[i];
-      if (String(l[0]).trim() === '') continue;
-      if (normalizarNome(l[1]).length <= 1) continue; // fase de grupos
-      if (!ehPlaceholder(l[3]) || !ehPlaceholder(l[4])) continue;
-      const dataHora = parseDataHora(l[2]);
-      if (!dataHora) continue;
-      if (Math.abs(dataHora.getTime() - inicio) <= 45 * 60 * 1000) candidatas.push(i + 1);
-    }
+      const vaga = vagas.filter(function (v) {
+        return !v.usada && mesmoDia(v.dataHora, inicio);
+      })[0]; // primeira vaga livre do dia (eventos chegam em ordem de horário)
+      if (!vaga) return;
 
-    if (candidatas.length === 1) {
-      aba.getRange(candidatas[0], 4, 1, 2).setValues([[casa, fora]]);
-      valores[candidatas[0] - 1][3] = casa;
-      valores[candidatas[0] - 1][4] = fora;
-      jaExiste[chaveTimes(casa, fora)] = candidatas[0];
+      vaga.usada = true;
+      aba.getRange(vaga.linha, 3, 1, 3).setValues([[inicio, casa, fora]]);
+      jaExiste[chaveTimes(casa, fora)] = vaga.linha;
       preenchidos++;
-    } else if (candidatas.length > 1) {
-      Logger.log('Mata-mata: "' + casa + ' x ' + fora + '" tem ' + candidatas.length +
-        ' linhas com o mesmo horário — preencha manualmente (linhas ' + candidatas.join(', ') + ').');
-    }
-  });
+      Logger.log('Mata-mata: linha ' + vaga.linha + ' -> ' + casa + ' x ' + fora +
+        ' (' + formatarDataHora(inicio) + ')');
+    });
+
   if (preenchidos) {
     Logger.log('Mata-mata: ' + preenchidos + ' confronto(s) preenchido(s) automaticamente.');
   }
