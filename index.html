@@ -10,13 +10,16 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="stylesheet" href="css/style.css?v=18" />
+  <link rel="stylesheet" href="css/style.css?v=19" />
 </head>
 <body>
 
   <!-- ===================== TELA 1: LOGIN ===================== -->
   <section id="tela-login" class="tela">
-    <div class="login-card">
+    <div class="login-envelope">
+      <img class="craques" src="img/craques.png" alt=""
+           onerror="this.style.display='none'" />
+      <div class="login-card">
       <h1 class="logo">Bolão do PRTTS<br /><span>⚽ Copa do Mundo 2026 🥇</span></h1>
 
       <div id="login-carregando" class="aviso">Carregando jogadores…</div>
@@ -34,6 +37,7 @@
         <button type="submit" id="btn-entrar" class="btn-primario">Entrar</button>
         <p id="login-erro" class="erro" hidden></p>
       </form>
+      </div>
     </div>
   </section>
 
