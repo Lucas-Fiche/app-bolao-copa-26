@@ -787,8 +787,11 @@ document.querySelectorAll('.sub-aba').forEach(btn => {
 function corDoJogador(nome) {
   const idx = Math.max(0, (estado.jogadores || []).indexOf(nome));
   const hue = Math.round(idx * 137.508) % 360;
-  const luz = 36 + (idx * 5) % 16; // 36–51%
-  return `hsl(${hue}, 68%, ${luz}%)`;
+  // Bandas fortes de saturação/luminosidade: matizes vizinhos caem em
+  // bandas diferentes, então "dois verdes" ficam claramente distintos.
+  const sat = [72, 85, 55][idx % 3];
+  const luz = [38, 52, 27][idx % 3];
+  return `hsl(${hue}, ${sat}%, ${luz}%)`;
 }
 
 function desenharEvolucao() {
@@ -827,24 +830,44 @@ function desenharEvolucao() {
     .forEach(i => {
       svg += `<text x="${x(i)}" y="${H - 8}" class="eixo" text-anchor="middle">${datas[i]}</text>`;
     });
-  // Uma linha por jogador
-  nomes.forEach(nome => {
+  // Uma linha por jogador. A destacada (toque na legenda) vai por último,
+  // para ficar por cima; as demais ficam translúcidas.
+  const destaque = estado.destaqueEvolucao;
+  const ordemDesenho = destaque
+    ? [...nomes.filter(n => n !== destaque), destaque]
+    : nomes;
+  ordemDesenho.forEach(nome => {
     const cor = corDoJogador(nome);
+    const apagada = destaque && nome !== destaque;
     const pontos = datas.map((d, i) =>
       `${x(i)},${y(porNome[nome][d] !== undefined ? porNome[nome][d] : 0)}`);
     svg += `<polyline points="${pontos.join(' ')}" fill="none" stroke="${cor}"
-             stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />`;
+             stroke-width="${nome === destaque ? 4 : 2.5}"
+             stroke-opacity="${apagada ? 0.15 : 1}"
+             stroke-linejoin="round" stroke-linecap="round" />`;
     const fim = porNome[nome][ultima] !== undefined ? porNome[nome][ultima] : 0;
-    svg += `<circle cx="${x(datas.length - 1)}" cy="${y(fim)}" r="4" fill="${cor}" />`;
+    svg += `<circle cx="${x(datas.length - 1)}" cy="${y(fim)}" r="${nome === destaque ? 5 : 4}"
+             fill="${cor}" fill-opacity="${apagada ? 0.15 : 1}" />`;
   });
   svg += '</svg>';
 
-  // Legenda na ordem do ranking atual
+  // Legenda na ordem do ranking atual; toque destaca a linha do jogador.
   const legenda = nomes.map(nome =>
-    `<span class="legenda-item"><i style="background:${corDoJogador(nome)}"></i>
+    `<span class="legenda-item${destaque === nome ? ' ativa' : ''}${destaque && destaque !== nome ? ' apagada' : ''}"
+       data-nome="${nome}"><i style="background:${corDoJogador(nome)}"></i>
       ${nome} <b>${porNome[nome][ultima] !== undefined ? porNome[nome][ultima] : 0}</b></span>`).join('');
 
-  cont.innerHTML = svg + `<div class="legenda">${legenda}</div>`;
+  cont.innerHTML = svg +
+    `<p class="aviso aviso-legenda">Toque num nome para destacar a linha 👇</p>` +
+    `<div class="legenda">${legenda}</div>`;
+
+  cont.querySelectorAll('.legenda-item').forEach(el => {
+    el.addEventListener('click', () => {
+      estado.destaqueEvolucao =
+        estado.destaqueEvolucao === el.dataset.nome ? null : el.dataset.nome;
+      desenharEvolucao();
+    });
+  });
 }
 
 // ===================== RASCUNHO (localStorage) =====================

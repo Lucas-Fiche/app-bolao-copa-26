@@ -156,6 +156,12 @@ select:focus, input:focus {
 
 .topo-acoes { display: flex; gap: 8px; }
 
+/* Em telas estreitas, os botões do topo viram só o emoji */
+@media (max-width: 480px) {
+  .topo-acoes .rotulo { display: none; }
+  .topo-acoes .btn-fantasma { padding: 8px 12px; font-size: 0.95rem; }
+}
+
 /* ===================== TOPO E ABAS ===================== */
 
 .topo {
@@ -474,7 +480,14 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   font-size: 0.82rem;
   color: var(--texto);
   font-weight: 600;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 999px;
+  user-select: none;
 }
+.legenda-item.ativa { background: var(--verde-claro); outline: 1px solid rgba(12, 175, 96, 0.4); }
+.legenda-item.apagada { opacity: 0.4; }
+.aviso-legenda { padding: 6px 0 0; font-size: 0.75rem; }
 .legenda-item i {
   width: 12px;
   height: 12px;
