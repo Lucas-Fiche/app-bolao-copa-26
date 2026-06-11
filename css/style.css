@@ -511,6 +511,80 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 #painel-ranking.tema-brasil .ranking .pontos { color: #0a7a3c; }
 #painel-ranking.tema-brasil .ranking .detalhe { border-top-color: rgba(0, 151, 57, 0.3); }
 
+/* ===================== HISTÓRICO DE PALPITES ===================== */
+
+.hist-corpo { margin-top: 14px; }
+.historico-lista { list-style: none; }
+.hist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  box-shadow: var(--sombra);
+}
+.hist-jogo { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.hist-jogo small { color: var(--texto-suave); font-size: 0.72rem; }
+.hist-jogo span { font-size: 0.92rem; font-weight: 600; }
+.hist-palpite {
+  display: inline-block;
+  min-width: 44px;
+  text-align: center;
+  color: var(--verde-escuro);
+}
+
+/* ===================== FINANCEIRO ===================== */
+
+.premio-total {
+  text-align: center;
+  background: linear-gradient(160deg, var(--verde-claro), #d2f2e1);
+  border: 1px solid rgba(12, 175, 96, 0.35);
+  border-radius: var(--raio);
+  padding: 18px 16px;
+  margin-bottom: 14px;
+}
+.premio-total small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--verde-escuro);
+}
+.premio-total strong {
+  display: block;
+  font-size: 2.2rem;
+  color: var(--verde-escuro);
+  margin: 4px 0;
+}
+.premio-total span { font-size: 0.8rem; color: var(--texto-suave); }
+
+.premios { list-style: none; }
+.premios li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--sombra);
+}
+.premio-pos { flex: 1; font-weight: 600; }
+.premio-pct {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--texto-suave);
+  background: var(--fundo);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.premio-valor { color: var(--verde-escuro); font-size: 1.05rem; }
+
 /* ===================== RODAPÉ FIXO ===================== */
 
 .rodape {

@@ -371,6 +371,8 @@ function montarAbas() {
   nav.innerHTML = '';
   nav.appendChild(criarAba('📅 Hoje', 'hoje'));
   nav.appendChild(criarAba('🇧🇷', 'brasil'));
+  nav.appendChild(criarAba('📜 Histórico', 'historico'));
+  nav.appendChild(criarAba('💰 Prêmio', 'financeiro'));
   estado.grupos.forEach(grupo => {
     nav.appendChild(criarAba(rotuloGrupo(grupo), grupo));
   });
@@ -388,6 +390,8 @@ function criarAba(rotulo, id) {
 function ativarAba(id) {
   estado.abaAtiva = id;
   if (id === 'hoje') montarPainelHoje(); // reconstrói com data/bloqueios atuais
+  if (id === 'historico') montarPainelHistorico();
+  if (id === 'financeiro') montarPainelFinanceiro();
   document.querySelectorAll('.aba').forEach(b => {
     b.classList.toggle('ativa', b.dataset.aba === id);
   });
@@ -411,6 +415,16 @@ function montarPaineisDeGrupos() {
   painelHoje.id = 'painel-hoje';
   painelHoje.hidden = true;
   container.appendChild(painelHoje);
+
+  // Painéis "Histórico" e "Prêmio" (conteúdo montado ao ativar a aba).
+  ['historico', 'financeiro'].forEach(id => {
+    const p = document.createElement('div');
+    p.className = 'painel';
+    p.dataset.painel = id;
+    p.id = 'painel-' + id;
+    p.hidden = true;
+    container.appendChild(p);
+  });
 
   // Painel "Brasil": só os jogos da Seleção, em qualquer fase.
   const painelBrasil = document.createElement('div');
@@ -496,6 +510,96 @@ function montarPainelHoje() {
   jogosDoDia
     .sort((a, b) => a.timestamp - b.timestamp)
     .forEach(jogo => painel.appendChild(criarCardJogo(jogo, true)));
+}
+
+// ===================== HISTÓRICO DE PALPITES =====================
+
+/**
+ * Todos os palpites de um jogador nos jogos já iniciados (o servidor só
+ * envia palpites de jogos que começaram, então não há vazamento).
+ */
+function montarPainelHistorico() {
+  const painel = $('#painel-historico');
+  const jogadores = (estado.ranking || []).map(r => r.nome);
+  if (!estado.jogadorHistorico || !jogadores.includes(estado.jogadorHistorico)) {
+    estado.jogadorHistorico = jogadores.includes(estado.nome) ? estado.nome : jogadores[0];
+  }
+
+  const opcoes = jogadores.map(n =>
+    `<option value="${n}"${n === estado.jogadorHistorico ? ' selected' : ''}>${n}</option>`).join('');
+
+  const iniciados = estado.jogos
+    .filter(j => j.palpites && j.palpites.length)
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  let corpo;
+  if (!iniciados.length) {
+    corpo = '<p class="aviso">📜 Os palpites de todos ficam visíveis aqui depois que cada jogo começa.<br />Volte após a primeira partida!</p>';
+  } else {
+    corpo = '<ul class="historico-lista">' + iniciados.map(jogo => {
+      const p = jogo.palpites.find(x => x.nome === estado.jogadorHistorico);
+      const esqueceu = !p || p.esqueceu || p.golsA === null;
+      const palpite = esqueceu ? '💤' : `${p.golsA} x ${p.golsB}`;
+      const pontos = p ? p.pontos : null;
+      const selo = pontos === null ? ''
+        : (p.exato ? `<span class="pts pts-3">🎯 +${pontos}</span>`
+        : pontos > 0 ? `<span class="pts pts-1">+${pontos}</span>`
+        : esqueceu ? '<span class="pts pts-zzz">0</span>'
+        : '<span class="pts pts-0">0</span>');
+      const resultado = (jogo.golsAReal !== null && jogo.golsBReal !== null)
+        ? `Resultado: ${jogo.golsAReal} x ${jogo.golsBReal}`
+        : 'Aguardando resultado';
+      return `<li class="hist-item">
+        <div class="hist-jogo">
+          <small>${jogo.dataHoraTexto} · ${rotuloGrupo(jogo.grupo)} · ${resultado}</small>
+          <span>${nomeComBandeira(jogo.timeA)} <b class="hist-palpite">${palpite}</b> ${nomeComBandeira(jogo.timeB)}</span>
+        </div>${selo}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  painel.innerHTML = `
+    <h2>📜 Histórico de palpites</h2>
+    <label for="select-historico">Ver palpites de</label>
+    <select id="select-historico">${opcoes}</select>
+    <div class="hist-corpo">${corpo}</div>`;
+
+  painel.querySelector('#select-historico').addEventListener('change', (ev) => {
+    estado.jogadorHistorico = ev.target.value;
+    montarPainelHistorico();
+  });
+}
+
+// ===================== FINANCEIRO =====================
+
+const VALOR_ENTRADA = 15; // R$ por participante
+const PREMIOS = [
+  { rotulo: '🥇 1º lugar', pct: 0.60 },
+  { rotulo: '🥈 2º lugar', pct: 0.30 },
+  { rotulo: '🥉 3º lugar', pct: 0.10 }
+];
+
+function montarPainelFinanceiro() {
+  const painel = $('#painel-financeiro');
+  const n = (estado.ranking || []).length;
+  const total = n * VALOR_ENTRADA;
+  const fmt = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const linhas = PREMIOS.map(p => `
+    <li>
+      <span class="premio-pos">${p.rotulo}</span>
+      <span class="premio-pct">${Math.round(p.pct * 100)}%</span>
+      <b class="premio-valor">${fmt(total * p.pct)}</b>
+    </li>`).join('');
+
+  painel.innerHTML = `
+    <h2>💰 Financeiro</h2>
+    <div class="premio-total">
+      <small>Prêmio total</small>
+      <strong>${fmt(total)}</strong>
+      <span>${n} participantes × ${fmt(VALOR_ENTRADA)}</span>
+    </div>
+    <ul class="premios">${linhas}</ul>
+    <p class="aviso">Critério de desempate: mais placares exatos (🎯).</p>`;
 }
 
 function criarCardJogo(jogo, comGrupo) {
