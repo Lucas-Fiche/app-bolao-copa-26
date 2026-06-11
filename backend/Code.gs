@@ -166,6 +166,19 @@ function montarInit() {
   const rankings = montarRankings(visiveis, jogos);
   const palpitesPorJogo = montarPalpitesRevelados(visiveis, jogos, agora);
   const aberturas = aberturasDasFases(jogos);
+
+  // Quem já palpitou em cada jogo (só os nomes — nunca os placares).
+  // Permite ao app mostrar a lista de quem fez/falta sem vazar palpites.
+  const nomesVisiveis = {};
+  visiveis.forEach(function (j) { nomesVisiveis[j.nome] = true; });
+  const palpitaramPorJogo = {};
+  lerPalpites().forEach(function (p) {
+    if (!nomesVisiveis[p.nome]) return;
+    if (!palpitaramPorJogo[p.idJogo]) palpitaramPorJogo[p.idJogo] = [];
+    if (palpitaramPorJogo[p.idJogo].indexOf(p.nome) === -1) {
+      palpitaramPorJogo[p.idJogo].push(p.nome);
+    }
+  });
   return {
     ok: true,
     serverTime: agora.getTime(),
@@ -193,6 +206,7 @@ function montarInit() {
           ? { a: Number(j.oddA), x: Number(j.oddX), b: Number(j.oddB) }
           : null,
         bloqueado: jogoBloqueado(j, agora, aberturas),
+        palpitaram: palpitaramPorJogo[j.id] || [],
         palpites: palpitesPorJogo[j.id] || null
       };
     })

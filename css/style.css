@@ -255,6 +255,33 @@ select:focus, input:focus {
 }
 .jogo-resultado b { font-size: 1.05rem; }
 
+/* Botão "quem já palpitou" no canto do card */
+.quem-palpitou {
+  margin-left: auto;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  background: var(--verde-claro);
+  border: 1px solid rgba(12, 175, 96, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.lista-quem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--texto-suave);
+}
+.lista-quem b { color: var(--texto); }
+
 .badge-grupo {
   display: inline-block;
   padding: 2px 8px;

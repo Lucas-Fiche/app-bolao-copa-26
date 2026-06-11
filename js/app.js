@@ -646,6 +646,36 @@ function criarCardJogo(jogo, comGrupo) {
     input.addEventListener('input', () => aoDigitarPalpite(jogo.id, card));
   });
 
+  // Botão "quem já palpitou": mostra só os nomes (nunca os placares).
+  if (Array.isArray(jogo.palpitaram)) {
+    const btnQuem = document.createElement('button');
+    btnQuem.type = 'button';
+    btnQuem.className = 'quem-palpitou';
+    btnQuem.dataset.id = jogo.id;
+    btnQuem.textContent = `✅ ${jogo.palpitaram.length}/${(estado.ranking || []).length}`;
+
+    const listaQuem = document.createElement('div');
+    listaQuem.className = 'lista-quem';
+    listaQuem.hidden = true;
+
+    btnQuem.addEventListener('click', () => {
+      if (listaQuem.hidden) {
+        // Monta na hora, para refletir palpites salvos nesta sessão.
+        const todos = (estado.ranking || []).map(r => r.nome);
+        const fizeram = todos.filter(n => jogo.palpitaram.includes(n));
+        const faltam = todos.filter(n => !jogo.palpitaram.includes(n));
+        listaQuem.innerHTML = `
+          <p><b>✅ Já palpitaram (${fizeram.length}):</b> ${fizeram.join(' · ') || 'ninguém ainda'}</p>
+          <p><b>⏳ Ainda faltam (${faltam.length}):</b> ${faltam.join(' · ') || 'ninguém — todos palpitaram! 🎉'}</p>`;
+      }
+      listaQuem.hidden = !listaQuem.hidden;
+    });
+
+    const linhaData = card.querySelector('.jogo-data');
+    linhaData.appendChild(btnQuem);
+    linhaData.insertAdjacentElement('afterend', listaQuem);
+  }
+
   // Palpites revelados (o servidor só os envia para jogos já iniciados).
   if (jogo.palpites && jogo.palpites.length) {
     const btn = document.createElement('button');
@@ -913,6 +943,20 @@ $('#btn-salvar').addEventListener('click', async () => {
     });
 
     if (!resp.ok) throw new Error(resp.erro || 'Erro ao salvar.');
+
+    // Marca o jogador nos contadores de "quem já palpitou" dos jogos aceitos.
+    (resp.salvos || []).forEach(id => {
+      const jogo = estado.jogos.find(j => String(j.id) === String(id));
+      if (jogo && Array.isArray(jogo.palpitaram) && !jogo.palpitaram.includes(estado.nome)) {
+        jogo.palpitaram.push(estado.nome);
+      }
+    });
+    document.querySelectorAll('.quem-palpitou[data-id]').forEach(btn => {
+      const jogo = estado.jogos.find(j => String(j.id) === btn.dataset.id);
+      if (jogo && Array.isArray(jogo.palpitaram)) {
+        btn.textContent = `✅ ${jogo.palpitaram.length}/${(estado.ranking || []).length}`;
+      }
+    });
 
     // Backup local do que acabou de ser salvo (só os aceitos pelo servidor).
     const aceitos = new Set((resp.salvos || []).map(String));
