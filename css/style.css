@@ -396,12 +396,20 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 
 /* ===================== RANKING ===================== */
 
-.sub-abas { display: flex; gap: 8px; margin-bottom: 14px; }
+/* 4 visões em grade de colunas iguais, sem quebra de linha */
+.sub-abas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
 
 .sub-aba {
-  padding: 7px 14px;
-  font-size: 0.82rem;
+  padding: 9px 4px;
+  font-size: 0.78rem;
   font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
   color: var(--texto);
   background: var(--card);
   border: 1px solid var(--borda);
@@ -413,6 +421,11 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
   color: #fff;
   background: var(--verde);
   border-color: var(--verde);
+}
+
+/* Telas muito estreitas: grade 2x2 */
+@media (max-width: 370px) {
+  .sub-abas { grid-template-columns: repeat(2, 1fr); }
 }
 
 .ranking { list-style: none; }

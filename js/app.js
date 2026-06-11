@@ -270,6 +270,12 @@ $('#btn-sair').addEventListener('click', () => {
   location.reload();
 });
 
+// Recarrega o app — útil no PWA, onde não há botão de atualizar do navegador.
+$('#btn-atualizar').addEventListener('click', () => {
+  mostrarToast('🔄 Atualizando…');
+  setTimeout(() => location.reload(), 300);
+});
+
 // ===================== TELA DE BÔNUS =====================
 
 function abrirTelaBonus() {
