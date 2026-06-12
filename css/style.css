@@ -219,6 +219,9 @@ select:focus, input:focus {
 }
 .painel h2 small { font-weight: 400; font-size: 0.75rem; color: var(--texto-suave); }
 
+/* Filtro por dia na aba Hoje */
+.filtro-dia { margin-bottom: 14px; }
+
 /* ===================== CARD DE JOGO ===================== */
 
 .jogo {

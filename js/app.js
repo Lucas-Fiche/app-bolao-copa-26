@@ -474,43 +474,69 @@ function montarPainelHoje() {
   const painel = $('#painel-hoje');
   painel.innerHTML = '';
 
-  const mesmoDia = (ts, ref) => {
-    const a = new Date(ts), b = new Date(ref);
-    return a.getFullYear() === b.getFullYear() &&
-           a.getMonth() === b.getMonth() &&
-           a.getDate() === b.getDate();
+  const chaveDia = (ts) => {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  };
+  const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const rotuloDia = (ts) => {
+    const d = new Date(ts);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} (${SEMANA[d.getDay()]})`;
   };
 
   const agora = agoraServidor();
-  let jogosDoDia = estado.jogos.filter(j => j.timestamp && mesmoDia(j.timestamp, agora));
-  let titulo = '📅 Jogos de hoje';
+  const hojeChave = chaveDia(agora);
 
-  if (!jogosDoDia.length) {
-    // Sem jogos hoje: mostra o próximo dia com jogos.
-    const futuros = estado.jogos
-      .filter(j => j.timestamp && j.timestamp > agora)
-      .sort((a, b) => a.timestamp - b.timestamp);
-    if (futuros.length) {
-      jogosDoDia = futuros.filter(j => mesmoDia(j.timestamp, futuros[0].timestamp));
-      const d = new Date(futuros[0].timestamp);
-      titulo = '📅 Sem jogos hoje — próximos jogos: ' +
-        String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
-    }
-  }
+  // Dias com jogos, em ordem cronológica.
+  const dias = new Map(); // chave -> timestamp do 1º jogo do dia
+  estado.jogos
+    .filter(j => j.timestamp)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .forEach(j => {
+      const c = chaveDia(j.timestamp);
+      if (!dias.has(c)) dias.set(c, j.timestamp);
+    });
 
-  const h2 = document.createElement('h2');
-  h2.textContent = titulo;
-  painel.appendChild(h2);
-
-  if (!jogosDoDia.length) {
-    const p = document.createElement('p');
-    p.className = 'aviso';
-    p.textContent = 'Nenhum jogo encontrado. Navegue pelos grupos acima. 👆';
-    painel.appendChild(p);
+  if (!dias.size) {
+    painel.innerHTML = '<h2>📅 Jogos</h2><p class="aviso">Nenhum jogo cadastrado ainda.</p>';
     return;
   }
 
-  jogosDoDia
+  // Dia padrão: hoje, se tiver jogos; senão o próximo dia com jogos.
+  let padrao = hojeChave;
+  if (!dias.has(padrao)) {
+    const proximo = [...dias.entries()].find(e => e[1] > agora);
+    padrao = proximo ? proximo[0] : [...dias.keys()].pop();
+  }
+  if (!estado.diaFiltro || !dias.has(estado.diaFiltro)) estado.diaFiltro = padrao;
+
+  const ehHoje = estado.diaFiltro === hojeChave;
+  const tsDia = dias.get(estado.diaFiltro);
+
+  const h2 = document.createElement('h2');
+  h2.textContent = ehHoje ? '📅 Jogos de hoje' : `📅 Jogos de ${rotuloDia(tsDia)}`;
+  painel.appendChild(h2);
+
+  // Filtro por dia
+  const filtro = document.createElement('div');
+  filtro.className = 'filtro-dia';
+  const select = document.createElement('select');
+  dias.forEach((ts, chave) => {
+    const opt = document.createElement('option');
+    opt.value = chave;
+    opt.textContent = (chave === hojeChave ? 'Hoje — ' : '') + rotuloDia(ts);
+    if (chave === estado.diaFiltro) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener('change', () => {
+    estado.diaFiltro = select.value;
+    montarPainelHoje();
+  });
+  filtro.appendChild(select);
+  painel.appendChild(filtro);
+
+  estado.jogos
+    .filter(j => j.timestamp && chaveDia(j.timestamp) === estado.diaFiltro)
     .sort((a, b) => a.timestamp - b.timestamp)
     .forEach(jogo => painel.appendChild(criarCardJogo(jogo, true)));
 }
