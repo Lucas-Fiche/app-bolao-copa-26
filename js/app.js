@@ -812,6 +812,8 @@ function montarRanking(tipo) {
   lista.innerHTML = '';
   dados.forEach((r, i) => {
     const li = document.createElement('li');
+    // Pódio com contorno dourado/prata/bronze (só no ranking geral).
+    if (tipo === 'geral' && i < 3) li.classList.add('top-' + (i + 1));
     const medalha = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
     const exatos = r.exatos > 0
       ? `<small class="exatos">🎯 ${r.exatos} na mosca</small>` : '';

@@ -484,6 +484,20 @@ input.gols:focus { border-color: var(--verde); background: var(--verde-claro); }
 }
 .ranking .pontos { color: var(--verde-escuro); font-weight: 700; }
 
+/* Pódio do ranking geral: ouro, prata e bronze */
+.ranking li.top-1 {
+  border: 2px solid #d4af37;
+  box-shadow: 0 2px 14px rgba(212, 175, 55, 0.35);
+}
+.ranking li.top-2 {
+  border: 2px solid #aab4c0;
+  box-shadow: 0 2px 12px rgba(140, 152, 165, 0.3);
+}
+.ranking li.top-3 {
+  border: 2px solid #cd7f32;
+  box-shadow: 0 2px 12px rgba(205, 127, 50, 0.28);
+}
+
 /* Palpites de campeão e artilheiro, sempre visíveis */
 .ranking .detalhe {
   display: flex;
