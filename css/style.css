@@ -285,16 +285,7 @@ select:focus, input:focus {
 }
 .lista-quem b { color: var(--texto); }
 
-.badge-madrugada {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #5e548e;
-  background: #ece9f7;
-  border-radius: 999px;
-  margin-left: 4px;
-}
+.badge-madrugada { margin-left: 4px; font-size: 0.85rem; }
 
 .badge-grupo {
   display: inline-block;
