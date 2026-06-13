@@ -4,6 +4,10 @@
  * ============================================================ */
 
 const MINUTOS_BLOQUEIO = 30;
+// Jogos que começam antes das 6h pertencem ao "dia de jogo" anterior, para
+// que partidas de madrugada apareçam na aba Hoje junto com o dia anterior.
+const CUTOFF_MADRUGADA_H = 6;
+const ehMadrugada = (ts) => !!ts && new Date(ts).getHours() < CUTOFF_MADRUGADA_H;
 const CHAVE_SESSAO = 'bolao26_sessao';
 const chaveRascunho = (nome) => 'bolao26_rascunho_' + nome;
 const chaveSalvos = (nome) => 'bolao26_salvos_' + nome; // backup do que já foi salvo
@@ -474,13 +478,16 @@ function montarPainelHoje() {
   const painel = $('#painel-hoje');
   painel.innerHTML = '';
 
-  const chaveDia = (ts) => {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-  };
   const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-  const rotuloDia = (ts) => {
-    const d = new Date(ts);
+  // "Dia de jogo": madrugada (< 6h) conta para o dia anterior. A chave é o
+  // timestamp da meia-noite desse dia (como string, p/ casar com o select).
+  const meiaNoiteDoDia = (ts) => {
+    const d = new Date(ts - CUTOFF_MADRUGADA_H * 3600000);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+  const chaveDia = (ts) => String(meiaNoiteDoDia(ts).getTime());
+  const rotuloDia = (chave) => {
+    const d = new Date(Number(chave));
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} (${SEMANA[d.getDay()]})`;
   };
 
@@ -488,13 +495,13 @@ function montarPainelHoje() {
   const hojeChave = chaveDia(agora);
 
   // Dias com jogos, em ordem cronológica.
-  const dias = new Map(); // chave -> timestamp do 1º jogo do dia
+  const dias = new Map();
   estado.jogos
     .filter(j => j.timestamp)
     .sort((a, b) => a.timestamp - b.timestamp)
     .forEach(j => {
       const c = chaveDia(j.timestamp);
-      if (!dias.has(c)) dias.set(c, j.timestamp);
+      if (!dias.has(c)) dias.set(c, true);
     });
 
   if (!dias.size) {
@@ -505,26 +512,25 @@ function montarPainelHoje() {
   // Dia padrão: hoje, se tiver jogos; senão o próximo dia com jogos.
   let padrao = hojeChave;
   if (!dias.has(padrao)) {
-    const proximo = [...dias.entries()].find(e => e[1] > agora);
-    padrao = proximo ? proximo[0] : [...dias.keys()].pop();
+    const proximo = [...dias.keys()].find(c => Number(c) > Number(hojeChave));
+    padrao = proximo || [...dias.keys()].pop();
   }
   if (!estado.diaFiltro || !dias.has(estado.diaFiltro)) estado.diaFiltro = padrao;
 
   const ehHoje = estado.diaFiltro === hojeChave;
-  const tsDia = dias.get(estado.diaFiltro);
 
   const h2 = document.createElement('h2');
-  h2.textContent = ehHoje ? '📅 Jogos de hoje' : `📅 Jogos de ${rotuloDia(tsDia)}`;
+  h2.textContent = ehHoje ? '📅 Jogos de hoje' : `📅 Jogos de ${rotuloDia(estado.diaFiltro)}`;
   painel.appendChild(h2);
 
   // Filtro por dia
   const filtro = document.createElement('div');
   filtro.className = 'filtro-dia';
   const select = document.createElement('select');
-  dias.forEach((ts, chave) => {
+  dias.forEach((_, chave) => {
     const opt = document.createElement('option');
     opt.value = chave;
-    opt.textContent = (chave === hojeChave ? 'Hoje — ' : '') + rotuloDia(ts);
+    opt.textContent = (chave === hojeChave ? 'Hoje — ' : '') + rotuloDia(chave);
     if (chave === estado.diaFiltro) opt.selected = true;
     select.appendChild(opt);
   });
@@ -652,7 +658,8 @@ function criarCardJogo(jogo, comGrupo) {
 
   card.innerHTML = `
     <div class="jogo-data">📅 ${jogo.dataHoraTexto}${comGrupo
-      ? ` <span class="badge-grupo">${rotuloGrupo(jogo.grupo)}</span>` : ''}</div>
+      ? ` <span class="badge-grupo">${rotuloGrupo(jogo.grupo)}</span>` : ''}${ehMadrugada(jogo.timestamp)
+      ? ' <span class="badge-madrugada">🌙 madrugada</span>' : ''}</div>
     ${encerrado
       ? `<div class="jogo-resultado">⚽ Placar final: <b>${jogo.golsAReal} x ${jogo.golsBReal}</b></div>` : ''}
     <div class="jogo-placar">
