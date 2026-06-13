@@ -643,6 +643,7 @@ function criarCardJogo(jogo, comGrupo) {
   if ([jogo.timeA, jogo.timeB].some(t => String(t).trim() === 'Brasil')) {
     card.classList.add('brasil');
   }
+  if (ehMadrugada(jogo.timestamp)) card.classList.add('madrugada');
 
   const palpite = estado.palpites[jogo.id] || {};
   const encerrado = jogo.golsAReal !== null && jogo.golsBReal !== null;

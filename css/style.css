@@ -285,14 +285,12 @@ select:focus, input:focus {
 }
 .lista-quem b { color: var(--texto); }
 
-.badge-madrugada {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 2px 7px;
-  font-size: 0.78rem;
-  background: #ece9f7;
-  border: 1px solid #c9bdec;
-  border-radius: 999px;
+.badge-madrugada { margin-left: 4px; font-size: 0.9rem; }
+
+/* Jogo de madrugada: card inteiro em roxo claro */
+.jogo.madrugada {
+  background: #f3f0fb;
+  border-color: #c9bdec;
 }
 
 .badge-grupo {
