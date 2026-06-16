@@ -111,16 +111,6 @@ body {
   40%           { transform: translateY(-5px); background: #ffd23d; }  /* amarelo */
 }
 
-/* Logo do app acima do título (tela de loading/login) */
-.login-logo {
-  display: block;
-  width: 110px;
-  height: 110px;
-  object-fit: contain;
-  margin: -4px auto 10px;
-  border-radius: 22px;
-}
-
 .logo {
   text-align: center;
   font-size: 1.7rem;
