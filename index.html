@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="stylesheet" href="css/style.css?v=31" />
+  <link rel="stylesheet" href="css/style.css?v=32" />
 </head>
 <body>
 
@@ -22,7 +22,12 @@
       <div class="login-card">
       <h1 class="logo">Bolão do PRTTS<br /><span>⚽ Copa do Mundo 2026 🥇</span></h1>
 
-      <div id="login-carregando" class="aviso">Carregando jogadores…</div>
+      <div id="login-carregando" class="aviso">
+        <div class="loading-dots" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p>Carregando jogadores…</p>
+      </div>
 
       <form id="form-login" hidden>
         <label for="select-nome">Quem é você?</label>

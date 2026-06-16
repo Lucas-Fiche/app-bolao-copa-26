@@ -76,11 +76,39 @@ body {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: var(--card);
-  border: 1px solid var(--borda);
+  /* Borda nas cores do Brasil (verde → amarelo) com interior branco */
+  border: 3px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(135deg, #009739, #ffd700, #009739) border-box;
   border-radius: var(--raio);
   padding: 32px 24px;
   box-shadow: var(--sombra);
+}
+
+/* Onda de pontos coloridos acima do "Carregando jogadores…" */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.loading-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #2f7de1;
+  animation: dot-onda 1.4s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.12s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.24s; }
+.loading-dots span:nth-child(4) { animation-delay: 0.36s; }
+.loading-dots span:nth-child(5) { animation-delay: 0.48s; }
+.loading-dots span:nth-child(6) { animation-delay: 0.60s; }
+.loading-dots span:nth-child(7) { animation-delay: 0.72s; }
+@keyframes dot-onda {
+  0%, 60%, 100% { transform: translateY(0); background: #2f7de1; }   /* azul */
+  20%           { transform: translateY(-11px); background: #18c964; } /* verde */
+  40%           { transform: translateY(-5px); background: #ffd23d; }  /* amarelo */
 }
 
 .logo {
