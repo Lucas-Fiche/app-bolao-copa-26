@@ -111,6 +111,15 @@ body {
   40%           { transform: translateY(-5px); background: #ffd23d; }  /* amarelo */
 }
 
+/* Logo acima do título (tela de loading/login) */
+.login-logo {
+  display: block;
+  height: 120px;
+  width: auto;
+  max-width: 80%;
+  margin: 0 auto 12px;
+}
+
 .logo {
   text-align: center;
   font-size: 1.7rem;
