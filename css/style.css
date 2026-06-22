@@ -259,6 +259,35 @@ select:focus, input:focus {
 /* Filtro por dia na aba Hoje */
 .filtro-dia { margin-bottom: 14px; }
 
+/* Card de retrospectiva (Wrapped) da fase de grupos */
+.retro-card {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+              linear-gradient(135deg, #009739, #ffd700, #009739) border-box;
+}
+.retro-card h3 {
+  font-size: 0.98rem;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.retro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.retro-stat {
+  text-align: center;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 8px 4px;
+}
+.retro-stat b { display: block; font-size: 1.35rem; color: var(--verde-escuro); }
+.retro-stat small { font-size: 0.66rem; color: var(--texto-suave); }
+.retro-extra { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--texto-suave); }
+.retro-extra b { color: var(--texto); }
+
 /* ===================== CARD DE JOGO ===================== */
 
 .jogo {

@@ -77,6 +77,119 @@ function jogadoresVisiveis(jogadores) {
   return jogadores.filter(function (j) { return !ehOculto(j.nome); });
 }
 
+// ===== Retrospectiva da fase de grupos =====
+// Card "Wrapped" com o rendimento de cada jogador na fase de grupos.
+// - Aparece a partir de RETRO_DATA (28/06, fim da fase de grupos).
+// - Enquanto RETRO_LIBERADO_GERAL for false, SÓ os nomes em RETRO_ADMINS
+//   veem (para testar sem afetar os demais). Para liberar a todos no dia
+//   28/06, troque RETRO_LIBERADO_GERAL para true.
+const RETRO_DATA = '28/06/2026 00:00:00';
+const RETRO_ADMINS = ['Admin'];
+const RETRO_LIBERADO_GERAL = false;
+
+function retrospectivaVisivel(nome, agora) {
+  if (RETRO_ADMINS.some(function (n) { return mesmoTexto(n, nome); })) return true;
+  const liberacao = parseDataHora(RETRO_DATA);
+  return RETRO_LIBERADO_GERAL && liberacao && agora.getTime() >= liberacao.getTime();
+}
+
+/**
+ * Estatísticas da fase de grupos para um jogador (card de retrospectiva).
+ * Usa só jogos de grupo (A–L) já finalizados.
+ */
+function montarRetrospectiva(nome, jogos, jogadores) {
+  const grupos = jogos.filter(function (j) {
+    return chaveDaFase(j.grupo) === null && j.dataHora && j.golsA !== '' && j.golsB !== '';
+  });
+  if (!grupos.length) return null;
+
+  const palpitesDe = {};
+  lerPalpites().forEach(function (p) { palpitesDe[p.nome + '|' + String(p.idJogo)] = p; });
+  const tz = Session.getScriptTimeZone();
+
+  function statsDe(n) {
+    var pontos = 0, exatos = 0, vencedor = 0, errou = 0, esqueceu = 0, palpitou = 0;
+    const porDia = {};
+    grupos.forEach(function (j) {
+      const p = palpitesDe[n + '|' + String(j.id)];
+      if (!p) { esqueceu++; return; }
+      palpitou++;
+      const pts = pontosDoPalpite(Number(p.golsA), Number(p.golsB),
+        Number(j.golsA), Number(j.golsB), pontuacaoDaFase(j.grupo));
+      pontos += pts;
+      if (pts === 3) exatos++; else if (pts === 1) vencedor++; else errou++;
+      const k = Utilities.formatDate(j.dataHora, tz, 'dd/MM');
+      porDia[k] = (porDia[k] || 0) + pts;
+    });
+    return { pontos: pontos, exatos: exatos, vencedor: vencedor, errou: errou,
+             esqueceu: esqueceu, palpitou: palpitou, porDia: porDia };
+  }
+
+  const eu = statsDe(nome);
+
+  // Ranking de grupos entre os visíveis (incluindo o próprio, mesmo oculto).
+  const comparaveis = jogadores.filter(function (j) {
+    return !ehOculto(j.nome) || mesmoTexto(j.nome, nome);
+  });
+  const tabela = comparaveis.map(function (j) {
+    return { nome: j.nome, pontos: statsDe(j.nome).pontos };
+  }).sort(function (a, b) { return b.pontos - a.pontos; });
+  var posicao = 0;
+  for (var i = 0; i < tabela.length; i++) {
+    if (mesmoTexto(tabela[i].nome, nome)) { posicao = i + 1; break; }
+  }
+  const media = tabela.reduce(function (s, x) { return s + x.pontos; }, 0) / tabela.length;
+
+  // Melhor dia
+  var melhorDia = null, melhorPts = 0;
+  Object.keys(eu.porDia).forEach(function (k) {
+    if (eu.porDia[k] > melhorPts) { melhorPts = eu.porDia[k]; melhorDia = k; }
+  });
+
+  // Maior sequência de jogos consecutivos pontuando
+  var seq = 0, melhorSeq = 0;
+  grupos.slice().sort(function (a, b) { return a.dataHora - b.dataHora; }).forEach(function (j) {
+    const p = palpitesDe[nome + '|' + String(j.id)];
+    const pts = p ? pontosDoPalpite(Number(p.golsA), Number(p.golsB),
+      Number(j.golsA), Number(j.golsB), pontuacaoDaFase(j.grupo)) : 0;
+    if (pts > 0) { seq++; if (seq > melhorSeq) melhorSeq = seq; } else { seq = 0; }
+  });
+
+  // Maior zebra acertada (maior odd entre os acertos), usando odds salvas
+  var zebra = null, zebraOdd = 0;
+  grupos.forEach(function (j) {
+    const p = palpitesDe[nome + '|' + String(j.id)];
+    if (!p) return;
+    const pa = Number(p.golsA), pb = Number(p.golsB);
+    const pts = pontosDoPalpite(pa, pb, Number(j.golsA), Number(j.golsB), pontuacaoDaFase(j.grupo));
+    if (pts <= 0) return;
+    const s = pa > pb ? 1 : (pa < pb ? -1 : 0);
+    const odd = Number(s > 0 ? j.oddA : (s < 0 ? j.oddB : j.oddX));
+    if (odd && odd > zebraOdd) {
+      zebraOdd = odd;
+      zebra = { timeA: j.timeA, timeB: j.timeB, odd: Math.round(odd * 100) / 100, exato: pts === 3 };
+    }
+  });
+
+  return {
+    jogos: grupos.length,
+    pontos: eu.pontos,
+    posicao: posicao,
+    total: tabela.length,
+    exatos: eu.exatos,
+    vencedor: eu.vencedor,
+    errou: eu.errou,
+    esqueceu: eu.esqueceu,
+    aproveitamento: Math.round((eu.exatos + eu.vencedor) / grupos.length * 100),
+    melhorDia: melhorDia,
+    melhorDiaPts: melhorPts,
+    melhorSeq: melhorSeq,
+    media: Math.round(media * 10) / 10,
+    difMedia: Math.round((eu.pontos - media) * 10) / 10,
+    zebra: zebra
+  };
+}
+
 // ===== The Odds API (the-odds-api.com) — odds e placares automáticos =====
 // 1. Crie uma conta gratuita e cole a chave abaixo.
 // 2. Rode listarEsportes() e confira no log o sport key da Copa
@@ -267,12 +380,18 @@ function fazerLogin(payload) {
     if (p.nome === jogador.nome) palpites[p.idJogo] = { golsA: p.golsA, golsB: p.golsB };
   });
 
+  const agora = new Date();
+  const retrospectiva = retrospectivaVisivel(jogador.nome, agora)
+    ? montarRetrospectiva(jogador.nome, lerJogos(), lerJogadores())
+    : null;
+
   return {
     ok: true,
     nome: jogador.nome,
     campeao: jogador.campeao,
     artilheiro: jogador.artilheiro,
-    palpites: palpites
+    palpites: palpites,
+    retrospectiva: retrospectiva
   };
 }
 

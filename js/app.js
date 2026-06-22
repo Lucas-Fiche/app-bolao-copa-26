@@ -218,6 +218,7 @@ async function fazerLogin(nome, pin, silencioso) {
     estado.pin = pin;
     estado.campeao = resp.campeao || '';
     estado.artilheiro = resp.artilheiro || '';
+    estado.retrospectiva = resp.retrospectiva || null;
     estado.palpites = {};
     Object.keys(resp.palpites || {}).forEach(id => {
       estado.palpites[id] = {
@@ -474,9 +475,41 @@ function montarPaineisDeGrupos() {
   });
 }
 
+// Card "Wrapped" da fase de grupos (só vem do servidor quando liberado).
+function cardRetrospectiva() {
+  const r = estado.retrospectiva;
+  if (!r) return null;
+  const card = document.createElement('div');
+  card.className = 'jogo retro-card';
+  const dif = r.difMedia >= 0 ? `+${r.difMedia}` : `${r.difMedia}`;
+  const zebra = r.zebra
+    ? `${nomeComBandeira(r.zebra.timeA)} x ${nomeComBandeira(r.zebra.timeB)} <b>(odd ${r.zebra.odd.toFixed(2)})</b>`
+    : null;
+  card.innerHTML = `
+    <h3>📊 Sua retrospectiva — Fase de grupos</h3>
+    <div class="retro-grid">
+      <div class="retro-stat"><b>${r.pontos}</b><small>pontos</small></div>
+      <div class="retro-stat"><b>${r.posicao}º</b><small>de ${r.total}</small></div>
+      <div class="retro-stat"><b>${r.aproveitamento}%</b><small>aproveit.</small></div>
+      <div class="retro-stat"><b>${r.exatos}</b><small>🎯 cravados</small></div>
+      <div class="retro-stat"><b>${r.vencedor}</b><small>✅ vencedor</small></div>
+      <div class="retro-stat"><b>${r.esqueceu}</b><small>😴 esquecidos</small></div>
+    </div>
+    <ul class="retro-extra">
+      <li>🔥 Melhor dia: <b>${r.melhorDiaPts} pts</b>${r.melhorDia ? ` em ${r.melhorDia}` : ''}</li>
+      <li>⚡ Melhor sequência: <b>${r.melhorSeq}</b> jogo(s) seguidos pontuando</li>
+      <li>⚖️ Média do grupo: ${r.media} pts — você ficou <b>${dif}</b></li>
+      ${zebra ? `<li>🦓 Maior zebra: ${zebra}</li>` : ''}
+    </ul>`;
+  return card;
+}
+
 function montarPainelHoje() {
   const painel = $('#painel-hoje');
   painel.innerHTML = '';
+
+  const retro = cardRetrospectiva();
+  if (retro) painel.appendChild(retro);
 
   const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   // "Dia de jogo": madrugada (< 6h) conta para o dia anterior. A chave é o
