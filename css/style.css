@@ -259,8 +259,9 @@ select:focus, input:focus {
 /* Filtro por dia na aba Hoje */
 .filtro-dia { margin-bottom: 14px; }
 
-/* Card teaser da retrospectiva — vibrante, chama atenção */
-.retro-card {
+/* Card teaser da retrospectiva — vibrante, chama atenção
+   (.jogo.retro-card vence o background branco de .jogo) */
+.jogo.retro-card {
   border: none;
   text-align: center;
   color: #fff;

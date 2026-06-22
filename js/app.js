@@ -514,6 +514,7 @@ function abrirRetrospectiva() {
     <ul class="retro-extra">
       <li>🔥 Melhor dia: <b>${r.melhorDiaPts} pts</b>${r.melhorDia ? ` em ${r.melhorDia}` : ''}</li>
       <li>⚖️ Média do grupo: ${r.media} pts — você ficou <b>${dif}</b></li>
+      ${r.selecaoTop ? `<li>⭐ Seleção que mais rendeu: ${nomeComBandeira(r.selecaoTop.nome)} <b>(${r.selecaoTop.pontos} pts)</b></li>` : ''}
       ${zebra ? `<li>🦓 Maior zebra: ${zebra}</li>` : ''}
     </ul>`;
   $('#tela-palpites').hidden = true;

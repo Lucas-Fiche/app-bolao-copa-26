@@ -171,6 +171,23 @@ function montarRetrospectiva(nome, jogos, jogadores) {
     }
   });
 
+  // Seleção que mais rendeu pontos (somando os jogos em que você pontuou)
+  const pontosPorTime = {};
+  grupos.forEach(function (j) {
+    const p = palpitesDe[nome + '|' + String(j.id)];
+    if (!p) return;
+    const pts = pontosDoPalpite(Number(p.golsA), Number(p.golsB),
+      Number(j.golsA), Number(j.golsB), pontuacaoDaFase(j.grupo));
+    if (pts <= 0) return;
+    [j.timeA, j.timeB].forEach(function (t) {
+      pontosPorTime[t] = (pontosPorTime[t] || 0) + pts;
+    });
+  });
+  var selecaoTop = null, selecaoTopPts = 0;
+  Object.keys(pontosPorTime).forEach(function (t) {
+    if (pontosPorTime[t] > selecaoTopPts) { selecaoTopPts = pontosPorTime[t]; selecaoTop = t; }
+  });
+
   return {
     jogos: grupos.length,
     pontos: eu.pontos,
@@ -186,7 +203,8 @@ function montarRetrospectiva(nome, jogos, jogadores) {
     melhorSeq: melhorSeq,
     media: Math.round(media * 10) / 10,
     difMedia: Math.round((eu.pontos - media) * 10) / 10,
-    zebra: zebra
+    zebra: zebra,
+    selecaoTop: selecaoTop ? { nome: selecaoTop, pontos: selecaoTopPts } : null
   };
 }
 
