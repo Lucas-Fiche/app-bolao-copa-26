@@ -79,13 +79,12 @@ function jogadoresVisiveis(jogadores) {
 
 // ===== Retrospectiva da fase de grupos =====
 // Card "Wrapped" com o rendimento de cada jogador na fase de grupos.
-// - Aparece a partir de RETRO_DATA (28/06, fim da fase de grupos).
-// - Enquanto RETRO_LIBERADO_GERAL for false, SÓ os nomes em RETRO_ADMINS
-//   veem (para testar sem afetar os demais). Para liberar a todos no dia
-//   28/06, troque RETRO_LIBERADO_GERAL para true.
+// - RETRO_ADMINS veem desde já (testes), independente da data.
+// - Os demais só veem a partir de RETRO_DATA (após o dia 27/06), pois
+//   RETRO_LIBERADO_GERAL está ligado.
 const RETRO_DATA = '28/06/2026 00:00:00';
-const RETRO_ADMINS = ['Admin'];
-const RETRO_LIBERADO_GERAL = false;
+const RETRO_ADMINS = ['Admin', 'Fiche'];
+const RETRO_LIBERADO_GERAL = true;
 
 function retrospectivaVisivel(nome, agora) {
   if (RETRO_ADMINS.some(function (n) { return mesmoTexto(n, nome); })) return true;
