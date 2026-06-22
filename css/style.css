@@ -299,7 +299,21 @@ select:focus, input:focus {
   color: #fff;
   justify-content: flex-start;
   padding: 16px;
+  position: relative;
+  overflow: hidden;
 }
+/* Chuva de emojis */
+#story-emojis { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+#story-emojis span {
+  position: absolute; top: -12%;
+  animation: emoji-cai linear forwards;
+  will-change: transform;
+}
+@keyframes emoji-cai {
+  from { transform: translateY(0) rotate(0); opacity: 0.95; }
+  to { transform: translateY(118vh) rotate(360deg); opacity: 0.9; }
+}
+.story-topo, .story-slide, .story-hint { position: relative; z-index: 1; }
 .story-topo { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
 .story-progress { display: flex; gap: 5px; }
 .story-progress i { flex: 1; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.35); }
@@ -321,9 +335,13 @@ select:focus, input:focus {
   to { opacity: 1; transform: none; }
 }
 .story-num { font-size: 7rem; font-weight: 800; line-height: 0.95; }
+.story-numline { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
+.story-numline b { font-size: 6rem; font-weight: 800; line-height: 1; }
+.story-numline span { font-size: 2.2rem; font-weight: 700; }
 .story-big { font-size: 2.6rem; font-weight: 800; line-height: 1.15; }
+.story-flags { font-size: 4rem; line-height: 1.1; }
 .story-cap { font-size: 1.6rem; font-weight: 700; opacity: 0.97; }
-.story-sub { font-size: 1.3rem; opacity: 0.92; }
+.story-sub { font-size: 1.3rem; opacity: 0.92; line-height: 1.4; }
 
 /* Estatísticas que aparecem uma a uma (slide dos palpites) */
 .story-stats { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
