@@ -547,8 +547,7 @@ function slidesRetro(r) {
   s.push({ nota: [440, 587], dur: 5000, emojis: ['📝', '⚽', '📋', '✍️'],
     bg: 'linear-gradient(150deg, #ee0979, #ff6a00)', html: `
     <p class="story-cap">Você palpitou em</p>
-    <div class="story-num">${palpitou}</div>
-    <p class="story-cap">jogos</p>
+    <div class="story-numline"><b>${palpitou}</b><span>jogos</span></div>
     <p class="story-sub">de ${r.jogos} na fase de grupos</p>` });
   s.push({ nota: [523, 659], dur: 5000, emojis: ['🎯', '📊', '🔥', '⭐'],
     bg: 'linear-gradient(150deg, #0061ff, #00c6ff 55%, #00e0a8)', html: `
@@ -558,15 +557,15 @@ function slidesRetro(r) {
     bg: 'linear-gradient(150deg, #11998e, #38ef7d)', html: `
     <p class="story-cap">Seus palpites foram</p>
     <div class="story-stats">
-      <div class="si"><b>${r.exatos}</b> <span>na mosca 🎯</span></div>
-      <div class="si"><b>${r.vencedor}</b> <span>vitórias ✅</span></div>
-      <div class="si"><b>${r.errou}</b> <span>erros ❌</span></div>
+      <div class="si"><b>${r.exatos}</b><span>na mosca 🎯</span></div>
+      <div class="si"><b>${r.vencedor}</b><span>vitórias ✅</span></div>
+      <div class="si"><b>${r.errou}</b><span>erros ❌</span></div>
     </div>` });
   if (r.melhorDia) s.push({ nota: [659, 784], dur: 5200, emojis: ['🔥', '🎉', '🏆', '✨'],
     bg: 'linear-gradient(150deg, #f7971e, #ff5858 60%, #f02fc2)', html: `
     <p class="story-cap">No seu melhor dia fez</p>
     <div class="story-numline"><b>${r.melhorDiaPts}</b><span>pontos</span></div>
-    <p class="story-sub">Parabéns!<br>Esse foi o seu dia: ${r.melhorDia}</p>` });
+    <p class="story-sub">Esse foi o seu dia: ${r.melhorDia}</p>` });
   if (r.selecaoTop) {
     const f = BANDEIRAS[r.selecaoTop.nome] || '';
     s.push({ nota: [698, 880], dur: 5200, emojis: [f || '⭐', '⚽', '🏆', '✨'],
