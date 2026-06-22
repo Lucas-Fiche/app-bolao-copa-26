@@ -538,30 +538,35 @@ function pontosFront(pa, pb, ra, rb, fase) {
 // --- Slides da animação (Wrapped) ---
 function slidesRetro(r) {
   const s = [];
-  s.push({ nota: [392, 523], html: `
+  s.push({ nota: [392, 523], bg: 'linear-gradient(150deg, #7b2ff7, #f107a3 50%, #ff8a00)', html: `
+    <p class="story-cap">Você fez</p>
     <div class="story-num">${r.pontos}</div>
-    <p class="story-cap">pontos na fase de grupos</p>
-    <p class="story-sub">🏆 ${r.posicao}º lugar de ${r.total} jogadores</p>` });
-  s.push({ nota: [523, 659], html: `
-    <div class="story-num">${r.aproveitamento}%</div>
-    <p class="story-cap">de aproveitamento</p>` });
-  s.push({ nota: [587, 740], html: `
-    <p class="story-cap">Seus palpites</p>
-    <div class="story-tri">
-      <div><b>${r.exatos}</b><span>🎯 na mosca</span></div>
-      <div><b>${r.vencedor}</b><span>✅ vencedor</span></div>
-      <div><b>${r.errou}</b><span>❌ erros</span></div>
+    <p class="story-cap">pontos</p>
+    <p class="story-sub">Você foi o ${r.posicao}º de ${r.total} jogadores!</p>` });
+  s.push({ nota: [523, 659], bg: 'linear-gradient(150deg, #0061ff, #00c6ff 55%, #00e0a8)', html: `
+    <p class="story-cap">Seu aproveitamento foi de</p>
+    <div class="story-num">${r.aproveitamento}%</div>` });
+  s.push({ nota: [587, 740], dur: 4400, bg: 'linear-gradient(150deg, #11998e, #38ef7d)', html: `
+    <p class="story-cap">Seus palpites foram</p>
+    <div class="story-stats">
+      <div class="si"><b>${r.exatos}</b> <span>na mosca 🎯</span></div>
+      <div class="si"><b>${r.vencedor}</b> <span>vitórias ✅</span></div>
+      <div class="si"><b>${r.errou}</b> <span>erros ❌</span></div>
     </div>` });
-  if (r.melhorDia) s.push({ nota: [659, 784], html: `
-    <p class="story-cap">🔥 Seu melhor dia</p>
+  if (r.melhorDia) s.push({ nota: [659, 784], bg: 'linear-gradient(150deg, #f7971e, #ff5858 60%, #f02fc2)', html: `
+    <p class="story-cap">No seu melhor dia você fez</p>
     <div class="story-num">${r.melhorDiaPts}</div>
-    <p class="story-sub">pontos em ${r.melhorDia}</p>` });
-  if (r.selecaoTop) s.push({ nota: [698, 880], html: `
-    <p class="story-cap">⭐ Seleção que mais rendeu</p>
-    <div class="story-big">${nomeComBandeira(r.selecaoTop.nome)}</div>
-    <p class="story-sub">${r.selecaoTop.pontos} pts conquistados</p>` });
-  if (r.zebra) s.push({ nota: [784, 988], html: `
-    <p class="story-cap">🦓 Sua maior zebra</p>
+    <p class="story-cap">pontos</p>
+    <p class="story-sub">Parabéns! 🎉 (${r.melhorDia})</p>` });
+  if (r.selecaoTop) {
+    const f = BANDEIRAS[r.selecaoTop.nome] || '';
+    s.push({ nota: [698, 880], bg: 'linear-gradient(150deg, #4b1248, #7b2ff7 55%, #00c6ff)', html: `
+      <p class="story-cap">A seleção que mais te deu pontos foi</p>
+      <div class="story-big">${f} ${r.selecaoTop.nome.toUpperCase()} ${f}</div>
+      <p class="story-sub">Foram ${r.selecaoTop.pontos} pontos conquistados</p>` });
+  }
+  if (r.zebra) s.push({ nota: [784, 988], bg: 'linear-gradient(150deg, #009245, #43cea2 50%, #f9d423)', html: `
+    <p class="story-cap">Sua maior zebra foi</p>
     <div class="story-big">${nomeComBandeira(r.zebra.timeA)} x ${nomeComBandeira(r.zebra.timeB)}</div>
     <p class="story-sub">odd ${r.zebra.odd.toFixed(2)} — e você acreditou!</p>` });
   return s;
@@ -582,6 +587,7 @@ function iniciarStory() {
 
 function renderStorySlide() {
   const slide = _storySlides[_storyIdx];
+  if (slide.bg) $('#tela-retro-story').style.backgroundImage = slide.bg;
   const el = $('#story-slide');
   el.innerHTML = slide.html;
   el.classList.remove('anim'); void el.offsetWidth; el.classList.add('anim');
@@ -590,7 +596,7 @@ function renderStorySlide() {
   });
   retroSom(slide.nota, 0.55);
   clearTimeout(_storyTimer);
-  _storyTimer = setTimeout(avancarStory, 3400);
+  _storyTimer = setTimeout(avancarStory, slide.dur || 3400);
 }
 
 function avancarStory() {
