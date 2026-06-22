@@ -489,6 +489,24 @@ function cardRetrospectiva() {
   return card;
 }
 
+// --- Trilha sonora da retrospectiva (arquivo em img/retrospectiva.mp3) ---
+let _retroTrack = null;
+function retroTrackPlay() {
+  if (estado.retroMudo) return;
+  try {
+    if (!_retroTrack) {
+      _retroTrack = new Audio('img/retrospectiva.mp3');
+      _retroTrack.loop = true;
+      _retroTrack.volume = 0.55;
+    }
+    _retroTrack.currentTime = 0;
+    _retroTrack.play().catch(() => {}); // sem arquivo: ignora e usa só os sons sintetizados
+  } catch (e) { /* áudio indisponível */ }
+}
+function retroTrackStop() {
+  if (_retroTrack) _retroTrack.pause();
+}
+
 // --- Áudio de celebração sintetizado (sem direitos autorais) ---
 let _retroAudio = null;
 function retroSom(freqs, dur) {
@@ -558,6 +576,7 @@ function iniciarStory() {
   $('#tela-retro').hidden = true;
   $('#tela-retro-story').hidden = false;
   $('#story-progress').innerHTML = _storySlides.map(() => '<i></i>').join('');
+  retroTrackPlay();
   renderStorySlide();
 }
 
@@ -583,6 +602,7 @@ function avancarStory() {
 
 function finalizarStory() {
   clearTimeout(_storyTimer);
+  retroTrackStop();
   retroSom([523, 659, 784, 1047], 0.7); // floreio final
   localStorage.setItem('bolao26_retro_visto_' + estado.nome, '1');
   $('#tela-retro-story').hidden = true;
@@ -687,6 +707,7 @@ $('#story-pular').addEventListener('click', finalizarStory);
 $('#story-mute').addEventListener('click', () => {
   estado.retroMudo = !estado.retroMudo;
   $('#story-mute').textContent = estado.retroMudo ? '🔇' : '🔊';
+  if (estado.retroMudo) retroTrackStop(); else retroTrackPlay();
 });
 
 function montarPainelHoje() {

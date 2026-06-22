@@ -313,22 +313,22 @@ select:focus, input:focus {
 .story-slide {
   flex: 1; display: flex; flex-direction: column;
   justify-content: center; align-items: center; text-align: center;
-  gap: 10px; cursor: pointer;
+  gap: 16px; cursor: pointer; padding: 20px 24px;
 }
 .story-slide.anim { animation: story-in 0.5s ease; }
 @keyframes story-in {
   from { opacity: 0; transform: translateY(18px) scale(0.95); }
   to { opacity: 1; transform: none; }
 }
-.story-num { font-size: 5rem; font-weight: 800; line-height: 1; }
-.story-big { font-size: 1.9rem; font-weight: 800; }
-.story-cap { font-size: 1.15rem; font-weight: 600; opacity: 0.95; }
-.story-sub { font-size: 1rem; opacity: 0.9; }
-.story-tri { display: flex; gap: 22px; margin-top: 8px; }
-.story-tri div { display: flex; flex-direction: column; gap: 2px; }
-.story-tri b { font-size: 2.6rem; font-weight: 800; line-height: 1; }
-.story-tri span { font-size: 0.8rem; opacity: 0.9; }
-.story-hint { text-align: center; font-size: 0.8rem; opacity: 0.8; padding-bottom: 8px; }
+.story-num { font-size: 7rem; font-weight: 800; line-height: 0.95; }
+.story-big { font-size: 2.6rem; font-weight: 800; line-height: 1.1; }
+.story-cap { font-size: 1.6rem; font-weight: 700; opacity: 0.97; }
+.story-sub { font-size: 1.3rem; opacity: 0.92; }
+.story-tri { display: flex; gap: 26px; margin-top: 10px; }
+.story-tri div { display: flex; flex-direction: column; gap: 4px; }
+.story-tri b { font-size: 3.6rem; font-weight: 800; line-height: 1; }
+.story-tri span { font-size: 1rem; opacity: 0.92; }
+.story-hint { text-align: center; font-size: 0.85rem; opacity: 0.8; padding-bottom: 10px; }
 
 /* Página de retrospectiva */
 .retro-hero {
