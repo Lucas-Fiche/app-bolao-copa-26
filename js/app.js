@@ -475,41 +475,60 @@ function montarPaineisDeGrupos() {
   });
 }
 
-// Card "Wrapped" da fase de grupos (só vem do servidor quando liberado).
+// Card teaser da retrospectiva (só vem do servidor quando liberado).
 function cardRetrospectiva() {
-  const r = estado.retrospectiva;
-  if (!r) return null;
+  if (!estado.retrospectiva) return null;
   const card = document.createElement('div');
   card.className = 'jogo retro-card';
+  card.innerHTML = `
+    <span class="retro-emoji">📊✨</span>
+    <h3>Sua Retrospectiva</h3>
+    <p>Como foi o seu desempenho na fase de grupos?</p>
+    <button class="retro-btn" type="button">Ver minha retrospectiva →</button>`;
+  card.querySelector('.retro-btn').addEventListener('click', abrirRetrospectiva);
+  return card;
+}
+
+// Página de retrospectiva (estatísticas detalhadas).
+function abrirRetrospectiva() {
+  const r = estado.retrospectiva;
+  if (!r) return;
   const dif = r.difMedia >= 0 ? `+${r.difMedia}` : `${r.difMedia}`;
   const zebra = r.zebra
     ? `${nomeComBandeira(r.zebra.timeA)} x ${nomeComBandeira(r.zebra.timeB)} <b>(odd ${r.zebra.odd.toFixed(2)})</b>`
     : null;
-  card.innerHTML = `
-    <h3>📊 Sua retrospectiva — Fase de grupos</h3>
+  $('#retro-conteudo').innerHTML = `
+    <div class="retro-hero">
+      <p class="retro-hero-sub">Fase de grupos · ${estado.nome}</p>
+      <div class="retro-hero-pts"><b>${r.pontos}</b><span>pontos</span></div>
+      <p class="retro-hero-pos">🏆 ${r.posicao}º lugar de ${r.total}</p>
+    </div>
     <div class="retro-grid">
-      <div class="retro-stat"><b>${r.pontos}</b><small>pontos</small></div>
-      <div class="retro-stat"><b>${r.posicao}º</b><small>de ${r.total}</small></div>
       <div class="retro-stat"><b>${r.aproveitamento}%</b><small>aproveit.</small></div>
       <div class="retro-stat"><b>${r.exatos}</b><small>🎯 cravados</small></div>
       <div class="retro-stat"><b>${r.vencedor}</b><small>✅ vencedor</small></div>
-      <div class="retro-stat"><b>${r.esqueceu}</b><small>😴 esquecidos</small></div>
+      <div class="retro-stat"><b>${r.errou}</b><small>❌ erros</small></div>
+      <div class="retro-stat"><b>${r.esqueceu}</b><small>😴 esquec.</small></div>
+      <div class="retro-stat"><b>${r.melhorSeq}</b><small>⚡ sequência</small></div>
     </div>
     <ul class="retro-extra">
       <li>🔥 Melhor dia: <b>${r.melhorDiaPts} pts</b>${r.melhorDia ? ` em ${r.melhorDia}` : ''}</li>
-      <li>⚡ Melhor sequência: <b>${r.melhorSeq}</b> jogo(s) seguidos pontuando</li>
       <li>⚖️ Média do grupo: ${r.media} pts — você ficou <b>${dif}</b></li>
       ${zebra ? `<li>🦓 Maior zebra: ${zebra}</li>` : ''}
     </ul>`;
-  return card;
+  $('#tela-palpites').hidden = true;
+  $('#tela-retro').hidden = false;
+  $('#retro-conteudo').scrollTop = 0;
 }
+
+$('#btn-retro-voltar').addEventListener('click', () => {
+  $('#tela-retro').hidden = true;
+  $('#tela-palpites').hidden = false;
+});
 
 function montarPainelHoje() {
   const painel = $('#painel-hoje');
   painel.innerHTML = '';
-
-  const retro = cardRetrospectiva();
-  if (retro) painel.appendChild(retro);
 
   const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
   // "Dia de jogo": madrugada (< 6h) conta para o dia anterior. A chave é o
@@ -573,6 +592,9 @@ function montarPainelHoje() {
   });
   filtro.appendChild(select);
   painel.appendChild(filtro);
+
+  const retro = cardRetrospectiva();
+  if (retro) painel.appendChild(retro);
 
   estado.jogos
     .filter(j => j.timestamp && chaveDia(j.timestamp) === estado.diaFiltro)
