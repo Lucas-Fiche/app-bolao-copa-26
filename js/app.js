@@ -489,10 +489,121 @@ function cardRetrospectiva() {
   return card;
 }
 
-// Página de retrospectiva (estatísticas detalhadas).
+// --- Áudio de celebração sintetizado (sem direitos autorais) ---
+let _retroAudio = null;
+function retroSom(freqs, dur) {
+  if (estado.retroMudo) return;
+  try {
+    _retroAudio = _retroAudio || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _retroAudio;
+    if (ctx.state === 'suspended') ctx.resume();
+    const t0 = ctx.currentTime;
+    freqs.forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      const st = t0 + i * 0.08;
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.linearRampToValueAtTime(0.16, st + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + (dur || 0.5));
+      o.connect(g).connect(ctx.destination);
+      o.start(st); o.stop(st + (dur || 0.5) + 0.02);
+    });
+  } catch (e) { /* áudio indisponível: segue sem som */ }
+}
+
+function pontosFront(pa, pb, ra, rb, fase) {
+  if (pa === ra && pb === rb) return fase.placar;
+  const s = (x, y) => (x > y ? 1 : (x < y ? -1 : 0));
+  return s(pa, pb) === s(ra, rb) ? fase.vencedor : 0;
+}
+
+// --- Slides da animação (Wrapped) ---
+function slidesRetro(r) {
+  const s = [];
+  s.push({ nota: [392, 523], html: `
+    <div class="story-num">${r.pontos}</div>
+    <p class="story-cap">pontos na fase de grupos</p>
+    <p class="story-sub">🏆 ${r.posicao}º lugar de ${r.total} jogadores</p>` });
+  s.push({ nota: [523, 659], html: `
+    <div class="story-num">${r.aproveitamento}%</div>
+    <p class="story-cap">de aproveitamento</p>` });
+  s.push({ nota: [587, 740], html: `
+    <p class="story-cap">Seus palpites</p>
+    <div class="story-tri">
+      <div><b>${r.exatos}</b><span>🎯 na mosca</span></div>
+      <div><b>${r.vencedor}</b><span>✅ vencedor</span></div>
+      <div><b>${r.errou}</b><span>❌ erros</span></div>
+    </div>` });
+  if (r.melhorDia) s.push({ nota: [659, 784], html: `
+    <p class="story-cap">🔥 Seu melhor dia</p>
+    <div class="story-num">${r.melhorDiaPts}</div>
+    <p class="story-sub">pontos em ${r.melhorDia}</p>` });
+  if (r.selecaoTop) s.push({ nota: [698, 880], html: `
+    <p class="story-cap">⭐ Seleção que mais rendeu</p>
+    <div class="story-big">${nomeComBandeira(r.selecaoTop.nome)}</div>
+    <p class="story-sub">${r.selecaoTop.pontos} pts conquistados</p>` });
+  if (r.zebra) s.push({ nota: [784, 988], html: `
+    <p class="story-cap">🦓 Sua maior zebra</p>
+    <div class="story-big">${nomeComBandeira(r.zebra.timeA)} x ${nomeComBandeira(r.zebra.timeB)}</div>
+    <p class="story-sub">odd ${r.zebra.odd.toFixed(2)} — e você acreditou!</p>` });
+  return s;
+}
+
+let _storyIdx = 0, _storySlides = [], _storyTimer = null;
+
+function iniciarStory() {
+  _storySlides = slidesRetro(estado.retrospectiva);
+  _storyIdx = 0;
+  $('#tela-palpites').hidden = true;
+  $('#tela-retro').hidden = true;
+  $('#tela-retro-story').hidden = false;
+  $('#story-progress').innerHTML = _storySlides.map(() => '<i></i>').join('');
+  renderStorySlide();
+}
+
+function renderStorySlide() {
+  const slide = _storySlides[_storyIdx];
+  const el = $('#story-slide');
+  el.innerHTML = slide.html;
+  el.classList.remove('anim'); void el.offsetWidth; el.classList.add('anim');
+  $('#story-progress').querySelectorAll('i').forEach((seg, i) => {
+    seg.className = i < _storyIdx ? 'feito' : (i === _storyIdx ? 'ativo' : '');
+  });
+  retroSom(slide.nota, 0.55);
+  clearTimeout(_storyTimer);
+  _storyTimer = setTimeout(avancarStory, 3400);
+}
+
+function avancarStory() {
+  clearTimeout(_storyTimer);
+  _storyIdx++;
+  if (_storyIdx >= _storySlides.length) { finalizarStory(); return; }
+  renderStorySlide();
+}
+
+function finalizarStory() {
+  clearTimeout(_storyTimer);
+  retroSom([523, 659, 784, 1047], 0.7); // floreio final
+  localStorage.setItem('bolao26_retro_visto_' + estado.nome, '1');
+  $('#tela-retro-story').hidden = true;
+  renderRetroConsolidado();
+  $('#tela-retro').hidden = false;
+}
+
+// Primeira vez: anima. Depois: vai direto para a página completa.
 function abrirRetrospectiva() {
+  if (!estado.retrospectiva) return;
+  if (localStorage.getItem('bolao26_retro_visto_' + estado.nome)) {
+    renderRetroConsolidado();
+    $('#tela-palpites').hidden = true;
+    $('#tela-retro').hidden = false;
+  } else {
+    iniciarStory();
+  }
+}
+
+function renderRetroConsolidado() {
   const r = estado.retrospectiva;
-  if (!r) return;
   const dif = r.difMedia >= 0 ? `+${r.difMedia}` : `${r.difMedia}`;
   const zebra = r.zebra
     ? `${nomeComBandeira(r.zebra.timeA)} x ${nomeComBandeira(r.zebra.timeB)} <b>(odd ${r.zebra.odd.toFixed(2)})</b>`
@@ -501,30 +612,81 @@ function abrirRetrospectiva() {
     <div class="retro-hero">
       <p class="retro-hero-sub">Fase de grupos · ${estado.nome}</p>
       <div class="retro-hero-pts"><b>${r.pontos}</b><span>pontos</span></div>
-      <p class="retro-hero-pos">🏆 ${r.posicao}º lugar de ${r.total}</p>
+      <p class="retro-hero-pos">🏆 ${r.posicao}º lugar de ${r.total} jogadores</p>
     </div>
     <div class="retro-grid">
       <div class="retro-stat"><b>${r.aproveitamento}%</b><small>aproveit.</small></div>
-      <div class="retro-stat"><b>${r.exatos}</b><small>🎯 cravados</small></div>
+      <div class="retro-stat"><b>${r.exatos}</b><small>🎯 na mosca</small></div>
       <div class="retro-stat"><b>${r.vencedor}</b><small>✅ vencedor</small></div>
       <div class="retro-stat"><b>${r.errou}</b><small>❌ erros</small></div>
       <div class="retro-stat"><b>${r.esqueceu}</b><small>😴 esquec.</small></div>
-      <div class="retro-stat"><b>${r.melhorSeq}</b><small>⚡ sequência</small></div>
+      <div class="retro-stat" title="Maior nº de jogos seguidos (em ordem de data) em que você pontuou"><b>${r.melhorSeq}</b><small>⚡ seguidas</small></div>
+    </div>
+    <div class="retro-melhordia" id="retro-melhordia">
+      <div class="retro-md-head">🔥 Melhor dia: <b>${r.melhorDiaPts} pts</b>${r.melhorDia ? ` em ${r.melhorDia}` : ''}<span class="seta">▾</span></div>
+      <div class="retro-md-jogos" hidden></div>
     </div>
     <ul class="retro-extra">
-      <li>🔥 Melhor dia: <b>${r.melhorDiaPts} pts</b>${r.melhorDia ? ` em ${r.melhorDia}` : ''}</li>
-      <li>⚖️ Média do grupo: ${r.media} pts — você ficou <b>${dif}</b></li>
       ${r.selecaoTop ? `<li>⭐ Seleção que mais rendeu: ${nomeComBandeira(r.selecaoTop.nome)} <b>(${r.selecaoTop.pontos} pts)</b></li>` : ''}
       ${zebra ? `<li>🦓 Maior zebra: ${zebra}</li>` : ''}
-    </ul>`;
-  $('#tela-palpites').hidden = true;
-  $('#tela-retro').hidden = false;
+      <li>⚖️ Média do grupo: <b>${r.media} pts</b> (média de todos os jogadores) — você fez <b>${dif}</b> em relação a ela</li>
+    </ul>
+    <button id="retro-rever" class="btn-fantasma retro-rever" type="button">↻ Rever animação</button>`;
+
+  const md = $('#retro-melhordia');
+  if (r.melhorDia) {
+    md.querySelector('.retro-md-head').addEventListener('click', () => {
+      const box = md.querySelector('.retro-md-jogos');
+      if (box.hidden) box.innerHTML = htmlJogosDoDia(r.melhorDia);
+      box.hidden = !box.hidden;
+      md.classList.toggle('aberto', !box.hidden);
+    });
+  } else {
+    md.querySelector('.seta').style.display = 'none';
+  }
+  $('#retro-rever').addEventListener('click', () => {
+    localStorage.removeItem('bolao26_retro_visto_' + estado.nome);
+    iniciarStory();
+  });
   $('#retro-conteudo').scrollTop = 0;
+}
+
+function htmlJogosDoDia(diaLabel) {
+  const ddmm = (ts) => {
+    const d = new Date(ts);
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  };
+  const jogos = estado.jogos.filter(j => j.timestamp && ehGrupoLetra(j.grupo) &&
+    j.golsAReal !== null && j.golsBReal !== null && ddmm(j.timestamp) === diaLabel)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  if (!jogos.length) return '<p class="aviso">Sem jogos.</p>';
+  return jogos.map(j => {
+    const p = estado.palpites[j.id];
+    const fase = pontuacaoDaFase(j.grupo);
+    let selo, meu;
+    if (p && p.golsA !== '' && p.golsB !== '') {
+      meu = `${p.golsA} x ${p.golsB}`;
+      const pts = pontosFront(Number(p.golsA), Number(p.golsB), j.golsAReal, j.golsBReal, fase);
+      selo = pts === fase.placar ? `<span class="pts pts-3">🎯 +${pts}</span>`
+        : (pts > 0 ? `<span class="pts pts-1">+${pts}</span>` : '<span class="pts pts-0">0</span>');
+    } else { meu = '💤'; selo = '<span class="pts pts-zzz">0</span>'; }
+    return `<div class="md-jogo">
+      <div class="md-info">
+        <span class="md-times">${nomeComBandeira(j.timeA)} x ${nomeComBandeira(j.timeB)}</span>
+        <span class="md-res">resultado ${j.golsAReal} x ${j.golsBReal} · seu palpite ${meu}</span>
+      </div>${selo}</div>`;
+  }).join('');
 }
 
 $('#btn-retro-voltar').addEventListener('click', () => {
   $('#tela-retro').hidden = true;
   $('#tela-palpites').hidden = false;
+});
+$('#story-slide').addEventListener('click', avancarStory);
+$('#story-pular').addEventListener('click', finalizarStory);
+$('#story-mute').addEventListener('click', () => {
+  estado.retroMudo = !estado.retroMudo;
+  $('#story-mute').textContent = estado.retroMudo ? '🔇' : '🔊';
 });
 
 function montarPainelHoje() {

@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="stylesheet" href="css/style.css?v=38" />
+  <link rel="stylesheet" href="css/style.css?v=39" />
 </head>
 <body>
 
@@ -110,6 +110,19 @@
     </footer>
   </section>
 
+  <!-- ===================== TELA: RETROSPECTIVA (ANIMAÇÃO) ===================== -->
+  <section id="tela-retro-story" class="tela tela-story" hidden>
+    <div class="story-topo">
+      <div class="story-progress" id="story-progress"></div>
+      <div class="story-acoes">
+        <button id="story-mute" class="story-mini" type="button">🔊</button>
+        <button id="story-pular" class="story-mini" type="button">pular ▸</button>
+      </div>
+    </div>
+    <div class="story-slide" id="story-slide"></div>
+    <div class="story-hint">toque para avançar</div>
+  </section>
+
   <!-- ===================== TELA: RETROSPECTIVA ===================== -->
   <section id="tela-retro" class="tela" hidden>
     <header class="topo">
@@ -125,6 +138,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="js/config.js?v=4"></script>
-  <script src="js/app.js?v=39"></script>
+  <script src="js/app.js?v=40"></script>
 </body>
 </html>

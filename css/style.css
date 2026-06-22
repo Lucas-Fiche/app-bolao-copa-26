@@ -291,6 +291,45 @@ select:focus, input:focus {
 }
 .retro-btn:active { transform: scale(0.97); }
 
+/* Tela da animação (Wrapped) */
+.tela-story {
+  background: linear-gradient(150deg, #7b2ff7, #f107a3 50%, #ff8a00);
+  background-size: 200% 200%;
+  animation: retro-gradiente 8s ease infinite;
+  color: #fff;
+  justify-content: flex-start;
+  padding: 16px;
+}
+.story-topo { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+.story-progress { display: flex; gap: 5px; }
+.story-progress i { flex: 1; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.35); }
+.story-progress i.ativo, .story-progress i.feito { background: #fff; }
+.story-acoes { display: flex; justify-content: space-between; }
+.story-mini {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff; border: none; border-radius: 999px;
+  padding: 6px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
+.story-slide {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  gap: 10px; cursor: pointer;
+}
+.story-slide.anim { animation: story-in 0.5s ease; }
+@keyframes story-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+.story-num { font-size: 5rem; font-weight: 800; line-height: 1; }
+.story-big { font-size: 1.9rem; font-weight: 800; }
+.story-cap { font-size: 1.15rem; font-weight: 600; opacity: 0.95; }
+.story-sub { font-size: 1rem; opacity: 0.9; }
+.story-tri { display: flex; gap: 22px; margin-top: 8px; }
+.story-tri div { display: flex; flex-direction: column; gap: 2px; }
+.story-tri b { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.story-tri span { font-size: 0.8rem; opacity: 0.9; }
+.story-hint { text-align: center; font-size: 0.8rem; opacity: 0.8; padding-bottom: 8px; }
+
 /* Página de retrospectiva */
 .retro-hero {
   text-align: center;
@@ -331,6 +370,26 @@ select:focus, input:focus {
   box-shadow: var(--sombra);
 }
 .retro-extra b { color: var(--texto); }
+
+/* Melhor dia expansível */
+.retro-melhordia {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.retro-md-head { cursor: pointer; font-size: 0.9rem; color: var(--texto-suave); display: flex; align-items: center; gap: 6px; }
+.retro-md-head b { color: var(--texto); }
+.retro-md-head .seta { margin-left: auto; transition: transform 0.2s; }
+.retro-melhordia.aberto .seta { transform: rotate(180deg); }
+.retro-md-jogos { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.md-jogo { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px dashed var(--borda); padding-top: 8px; }
+.md-info { display: flex; flex-direction: column; }
+.md-times { font-weight: 600; font-size: 0.85rem; }
+.md-res { color: var(--texto-suave); font-size: 0.72rem; }
+.retro-rever { margin-top: 14px; width: 100%; }
 
 /* ===================== CARD DE JOGO ===================== */
 
